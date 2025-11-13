@@ -10,6 +10,7 @@ interface DisplayProps {
   aiSuggestion: AISuggestion | null;
   onApplyAiFix: () => void;
   isCalculationExecuted: boolean;
+  lastExpression: string | null;
   onUpdateInput: (value: string) => void;
 }
 
@@ -50,7 +51,7 @@ const renderPreviewWithTax = (text: string, settings: TaxSettings) => {
   );
 };
 
-const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggestion, onApplyAiFix, isCalculationExecuted, onUpdateInput }) => {
+const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggestion, onApplyAiFix, isCalculationExecuted, lastExpression, onUpdateInput }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -67,13 +68,12 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   let liveResult = '0';
   let taxAmount = '';
   let totalWithTax = '';
-  let preview = isCalculationExecuted ? '' : input;
+  let preview = isCalculationExecuted ? lastExpression : input;
   
   if (error) {
     liveResult = '...';
   } else if (isCalculationExecuted) {
     liveResult = input;
-    preview = '';
   } else {
     try {
       const safeExpr = input.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100').replace(/(?<=^|\()(\+)/g, '');
@@ -114,7 +114,7 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
       }
       const taxLabel = 'الضريبة';
       taxAmount = `${taxLabel}: ${taxValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
-      totalWithTax = `${secondaryLabel}: ${secondaryValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
+      totalWithTax = `${secondaryLabel}: ${secondaryLabel}: ${secondaryValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
   }
 
   const displayBorderClass = error || aiSuggestion ? 'bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shadow-[0_0_20px_rgba(255,61,0,0.7)]' : '';
@@ -124,7 +124,7 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
     if (error?.details) {
         const { pre, highlight, post } = error.details;
         content = <>{pre}<span className='text-red-500 bg-red-500/20 rounded-md px-1 error-highlight'>{highlight}</span>{post}</>;
-    } else if (taxSettings.showTaxPerNumber) {
+    } else if (taxSettings.showTaxPerNumber && preview) {
         content = renderPreviewWithTax(preview, taxSettings);
     } else {
         content = preview || ' ';
@@ -145,7 +145,7 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
             {isEditing ? (
                  <textarea
                     ref={textareaRef}
-                    value={preview}
+                    value={preview || ''}
                     onChange={(e) => onUpdateInput(e.target.value)}
                     onBlur={() => setIsEditing(false)}
                     className="w-full bg-transparent border-none outline-none resize-none text-xl opacity-70 text-left direction-ltr p-0 m-0 leading-normal text-[var(--text-display)]"

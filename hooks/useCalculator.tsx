@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { parseExpression } from '../services/calculationEngine';
@@ -10,17 +9,31 @@ interface UseCalculatorProps {
   showNotification: (message: string) => void;
 }
 
+let audioContext: AudioContext | null = null;
+const getAudioContext = () => {
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        } catch(e) {
+            console.error("Web Audio API is not supported in this browser.");
+        }
+    }
+    return audioContext;
+};
+
 export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
   const [input, setInput] = useState('0');
   const [history, setHistory] = useLocalStorage<HistoryItem[]>('calcHistory_v2', []);
   const [lastAnswer, setLastAnswer] = useLocalStorage<string>('calcLastAnswer', '0');
   const [vibrationEnabled, setVibrationEnabled] = useLocalStorage<boolean>('calcVibration', true);
+  const [soundEnabled, setSoundEnabled] = useLocalStorage<boolean>('calcSoundEnabled', false);
   const [taxSettings, setTaxSettings] = useLocalStorage<TaxSettings>('calcTaxSettings_v2', { isEnabled: false, mode: 'add-15', rate: 15, showTaxPerNumber: false });
   const [maxHistory, setMaxHistory] = useLocalStorage<number>('calcMaxHistory', 50);
   const [buttonLayout] = useLocalStorage('calcButtonLayout_v10', defaultButtonLayout);
   const [calculationExecuted, setCalculationExecuted] = useState(false);
   const [error, setError] = useState<ErrorState | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
+  const [lastExpression, setLastExpression] = useState<string | null>(null);
 
   const entryCount = useMemo(() => {
       if (calculationExecuted) return 1;
@@ -35,29 +48,76 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     }
   };
 
+  const playSound = useCallback((type: 'number' | 'operator' | 'function' | 'equals' | 'clear' | 'backspace') => {
+    if (!soundEnabled) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (ctx.state === 'suspended') {
+        ctx.resume();
+    }
+    
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    let frequency = 440;
+    let waveType: OscillatorType = 'sine';
+    let duration = 0.1;
+    let volume = 0.2;
+
+    switch (type) {
+        case 'number':      frequency = 650 + Math.random() * 100; waveType = 'sine'; volume = 0.15; break;
+        case 'operator':    frequency = 440; waveType = 'sine'; break;
+        case 'function':    frequency = 523; waveType = 'triangle'; break;
+        case 'equals':      frequency = 880; waveType = 'sine'; volume = 0.3; duration = 0.2; break;
+        case 'backspace':   frequency = 380; waveType = 'triangle'; volume = 0.1; duration=0.08; break;
+        case 'clear':       frequency = 220; waveType = 'sawtooth'; volume = 0.25; duration = 0.15; break;
+    }
+
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.01);
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+    oscillator.type = waveType;
+    oscillator.start(ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+    oscillator.stop(ctx.currentTime + duration);
+  }, [soundEnabled]);
+
   const clearAll = useCallback(() => {
+    playSound('clear');
     vibrate(50);
     setInput('0');
     setCalculationExecuted(false);
     setError(null);
     setAiSuggestion(null);
-  }, [vibrationEnabled]);
+    setLastExpression(null);
+  }, [vibrationEnabled, playSound]);
 
   const backspace = useCallback(() => {
+    playSound('backspace');
     vibrate(30);
     setError(null);
     setAiSuggestion(null);
+    setLastExpression(null);
     setInput(prev => {
       const newStr = prev.slice(0, -1);
       return newStr === '' || newStr === '0' ? '0' : newStr;
     });
     setCalculationExecuted(false);
-  }, [vibrationEnabled]);
+  }, [vibrationEnabled, playSound]);
 
   const append = useCallback((value: string) => {
+    if (['+', '-', '×', '÷'].includes(value)) {
+        playSound('operator');
+    } else {
+        playSound('number');
+    }
     vibrate(20);
     setError(null);
     setAiSuggestion(null);
+    setLastExpression(null);
     if (calculationExecuted) {
       const isOperator = ['+', '-', '×', '÷'].includes(value);
       setInput(isOperator ? input + value : value);
@@ -80,25 +140,28 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       
       return prev + value;
     });
-  }, [calculationExecuted, input, vibrationEnabled]);
+  }, [calculationExecuted, input, vibrationEnabled, playSound]);
 
    const toggleSign = useCallback(() => {
+    playSound('function');
     vibrate(30);
+    setLastExpression(null);
     const isSimpleNumber = /^-?\d+(\.\d+)?$/.test(input);
     if (calculationExecuted || isSimpleNumber) {
         setInput(prev => {
             if (prev === '0') return '0';
-            const new_input = prev.startsWith('-') ? prev.slice(1) : '-' + prev;
-            setCalculationExecuted(false);
-            return new_input;
+            return prev.startsWith('-') ? prev.slice(1) : '-' + prev;
         });
+        setCalculationExecuted(false);
     }
-  }, [vibrationEnabled, calculationExecuted, input]);
+  }, [vibrationEnabled, calculationExecuted, input, playSound]);
 
   const handleParenthesis = useCallback(() => {
+    playSound('function');
     vibrate(20);
     setError(null);
     setAiSuggestion(null);
+    setLastExpression(null);
     if (calculationExecuted) {
         setInput('(');
         setCalculationExecuted(false);
@@ -118,12 +181,14 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
             return prev + '(';
         }
     });
-  }, [calculationExecuted, vibrationEnabled]);
+  }, [calculationExecuted, vibrationEnabled, playSound]);
 
    const appendAnswer = useCallback(() => {
+    playSound('function');
     vibrate(20);
     setError(null);
     setAiSuggestion(null);
+    setLastExpression(null);
     if (calculationExecuted) {
         setInput(lastAnswer);
         setCalculationExecuted(false);
@@ -137,9 +202,13 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         }
         return prev + lastAnswer;
     });
-  }, [lastAnswer, calculationExecuted, vibrationEnabled]);
+  }, [lastAnswer, calculationExecuted, vibrationEnabled, playSound]);
 
   const calculate = useCallback(async () => {
+    if (calculationExecuted) {
+      return;
+    }
+    playSound('equals');
     vibrate(70);
     setError(null);
     setAiSuggestion(null);
@@ -194,10 +263,12 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       setHistory(prev => [newItem, ...prev].slice(0, maxHistory));
       setInput(resultStr);
       setCalculationExecuted(true);
+      setLastExpression(expression);
     } catch (e: any) {
         const errorMessage = e.message || 'خطأ غير معروف';
         setError({ message: errorMessage, details: findErrorDetails(expression, errorMessage) });
         setCalculationExecuted(false);
+        setLastExpression(null);
         
         const localFix = getLocalFix(expression);
         if (localFix && localFix.fix) {
@@ -206,13 +277,15 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
             setAiSuggestion(null);
         }
     }
-  }, [input, taxSettings, setHistory, vibrationEnabled, maxHistory, setLastAnswer]);
+  }, [input, taxSettings, setHistory, vibrationEnabled, maxHistory, setLastAnswer, calculationExecuted, playSound]);
   
   const applyAiFix = useCallback(() => {
     if (aiSuggestion?.fix) {
         setInput(aiSuggestion.fix);
         setError(null);
         setAiSuggestion(null);
+        setLastExpression(null);
+        setCalculationExecuted(false);
     }
   }, [aiSuggestion]);
 
@@ -230,11 +303,13 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     setCalculationExecuted(false);
     setError(null);
     setAiSuggestion(null);
+    setLastExpression(null);
   }, []);
 
   const updateInput = useCallback((value: string) => {
     setError(null);
     setAiSuggestion(null);
+    setLastExpression(null);
     if (calculationExecuted) {
         setCalculationExecuted(false);
     }
@@ -254,9 +329,10 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
   }), [append, clearAll, backspace, calculate, toggleSign, handleParenthesis, appendAnswer, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote]);
 
   return {
-    input, history, error, aiSuggestion, isCalculationExecuted: calculationExecuted, entryCount,
+    input, history, error, aiSuggestion, isCalculationExecuted: calculationExecuted, entryCount, lastExpression,
     settings: {
       vibrationEnabled, setVibrationEnabled,
+      soundEnabled, setSoundEnabled,
       taxSettings, setTaxSettings, maxHistory, setMaxHistory, buttonLayout
     },
     actions

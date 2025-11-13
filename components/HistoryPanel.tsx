@@ -135,19 +135,21 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
                               </div>
                           </div>
                       ) : (
-                          <div className="mt-2 flex justify-between items-center">
-                              {item.notes ?
-                                  <p className="text-sm text-[var(--text-secondary)] italic pr-2 break-all flex-grow">{`"${item.notes}"`}</p> :
-                                  <div className="flex-grow"></div>}
-                               <div className="flex items-center gap-2 flex-shrink-0">
-                                  <button onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })} className="text-xs text-[var(--accent-color)] hover:underline whitespace-nowrap">{item.notes ? "تعديل" : "إضافة ملاحظة"}</button>
-                                  <button
-                                      onClick={() => onDeleteItem(item)}
-                                      aria-label={`حذف ${item.expression}`}
-                                      className="text-lg text-red-500/70 hover:text-red-500 transition-colors"
-                                  >🗑️</button>
-                               </div>
-                          </div>
+                        <div className="mt-2 flex justify-between items-center gap-2">
+                            <button onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })} className="text-xs text-[var(--accent-color)] hover:underline whitespace-nowrap">{item.notes ? "تعديل ملاحظة" : "إضافة ملاحظة"}</button>
+                            
+                            {item.notes ? (
+                                <p className="text-sm text-[var(--text-secondary)] italic px-2 break-all text-center flex-grow">{`"${item.notes}"`}</p>
+                            ) : (
+                                <div className="flex-grow"></div>
+                            )}
+
+                            <button
+                                onClick={() => onDeleteItem(item)}
+                                aria-label={`حذف ${item.expression}`}
+                                className="text-lg text-red-500/70 hover:text-red-500 transition-colors"
+                            >🗑️</button>
+                        </div>
                       )}
                     </div>
                   )

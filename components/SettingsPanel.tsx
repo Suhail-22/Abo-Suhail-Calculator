@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TaxSettings } from '../types';
 
@@ -8,6 +7,8 @@ interface SettingsPanelProps {
   settings: {
     vibrationEnabled: boolean;
     setVibrationEnabled: (enabled: boolean) => void;
+    soundEnabled: boolean;
+    setSoundEnabled: (enabled: boolean) => void;
     taxSettings: TaxSettings;
     setTaxSettings: React.Dispatch<React.SetStateAction<TaxSettings>>;
     maxHistory: number;
@@ -34,7 +35,7 @@ const convertArabicNumerals = (str: string | number): string => {
 };
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings, theme, onThemeChange, fontFamily, setFontFamily, fontScale, setFontScale, buttonTextColor, setButtonTextColor, onOpenSupport, onShowAbout, onCheckForUpdates }) => {
-  const { vibrationEnabled, setVibrationEnabled, taxSettings, setTaxSettings, maxHistory, setMaxHistory } = settings;
+  const { vibrationEnabled, setVibrationEnabled, soundEnabled, setSoundEnabled, taxSettings, setTaxSettings, maxHistory, setMaxHistory } = settings;
   
   const handleTaxChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -136,9 +137,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings
             }} min="1" max="500" className="w-24 p-2 rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-inset)] text-[var(--text-primary)] text-center"
           />
         </label>
-        <label className="flex items-center justify-between text-[var(--text-secondary)]">
+        <label className="flex items-center justify-between text-[var(--text-secondary)] mb-4">
           <span>تفعيل الاهتزاز عند الضغط</span>
           <input type="checkbox" checked={vibrationEnabled} onChange={(e) => setVibrationEnabled(e.target.checked)} className="w-5 h-5 accent-[var(--accent-color)]" />
+        </label>
+        <label className="flex items-center justify-between text-[var(--text-secondary)]">
+          <span>تفعيل المؤثرات الصوتية</span>
+          <input type="checkbox" checked={soundEnabled} onChange={(e) => setSoundEnabled(e.target.checked)} className="w-5 h-5 accent-[var(--accent-color)]" />
         </label>
       </div>
       <hr className="border-[var(--border-secondary)] my-4" />

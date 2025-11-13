@@ -16,7 +16,7 @@ interface CalculatorProps {
 
 const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, onToggleHistory, onShare, entryCount }) => {
   const { taxSettings } = calculator.settings;
-  const { input, error, aiSuggestion, actions } = calculator;
+  const { input, error, aiSuggestion, actions, lastExpression } = calculator;
 
   const handleShare = async () => {
     const expression = calculator.isCalculationExecuted ? calculator.history[0]?.expression : input;
@@ -72,6 +72,7 @@ const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, o
           aiSuggestion={aiSuggestion}
           onApplyAiFix={actions.applyAiFix}
           isCalculationExecuted={calculator.isCalculationExecuted}
+          lastExpression={lastExpression}
           onUpdateInput={actions.updateInput}
         />
         <ButtonGrid
