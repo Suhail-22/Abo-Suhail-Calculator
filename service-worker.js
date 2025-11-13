@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'ai-calculator-v3';
+const CACHE_NAME = 'ai-calculator-v4';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -7,6 +7,8 @@ const URLS_TO_CACHE = [
   './assets/icon.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './assets/screenshot-narrow.png',
+  './assets/screenshot-wide.png',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
   'https://esm.sh/react@18.3.1',
