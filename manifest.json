@@ -1,0 +1,27 @@
+
+{
+  "short_name": "AI Calculator",
+  "name": "Advanced AI Calculator",
+  "icons": [
+    {
+      "src": "/assets/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    },
+    {
+      "src": "/assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#F0F4F8",
+  "background_color": "#F0F4F8",
+  "lang": "ar"
+}
