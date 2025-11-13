@@ -1,12 +1,16 @@
 
-const CACHE_NAME = 'ai-calculator-v1';
+const CACHE_NAME = 'ai-calculator-v2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
   '/assets/icon.svg',
   '/assets/icon-192.png',
-  '/assets/icon-512.png'
+  '/assets/icon-512.png',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
+  'https://aistudiocdn.com/react@^19.2.0',
+  'https://aistudiocdn.com/react-dom@^19.2.0/client'
 ];
 
 self.addEventListener('install', event => {
@@ -24,13 +28,34 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => {
         if (response) {
-          return response;
+          return response; // Cache hit - return response
         }
-        return fetch(event.request);
-      }
-    )
+
+        return fetch(event.request).then(
+          (networkResponse) => {
+            // Check if we received a valid response
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
+              return networkResponse;
+            }
+
+            // IMPORTANT: Clone the response. A response is a stream
+            // and because we want the browser to consume the response
+            // as well as the cache consuming the response, we need
+            // to clone it so we have two streams.
+            const responseToCache = networkResponse.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return networkResponse;
+          }
+        );
+      })
   );
 });
+
 
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];

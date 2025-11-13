@@ -98,9 +98,14 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
             <div key={date}>
               <div className={`flex justify-between items-center py-2 ${groupIndex > 0 ? 'mt-3 border-t border-[var(--border-secondary)]' : ''}`}>
                 <h4 className="text-sm font-bold text-[var(--text-secondary)]">{date}</h4>
-                <span className="text-sm font-bold text-green-400">
-                  الإجمالي: {total.toLocaleString('en-US', { maximumFractionDigits: 2, useGrouping: false })}
-                </span>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-bold text-green-400">
+                        الإجمالي: {total.toLocaleString('en-US', { maximumFractionDigits: 2, useGrouping: false })}
+                    </span>
+                    <span className="text-xs text-[var(--text-secondary)]">
+                        ({items.length} عمليات)
+                    </span>
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 {items.map((item) => {

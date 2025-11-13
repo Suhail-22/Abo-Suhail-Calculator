@@ -31,7 +31,6 @@ export interface ErrorState {
 export interface AISuggestion {
   message: string;
   fix: string | null;
-  isLoading: boolean;
 }
 
 export interface ButtonConfig {

@@ -166,18 +166,14 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
         </div>
         {(aiSuggestion || error) && (
           <div className="absolute bottom-0 left-0 right-0 text-center text-sm text-[#ff3d00] bg-[rgba(255,61,0,0.15)] p-2 rounded-xl border border-[rgba(255,61,0,0.7)] z-10 flex justify-between items-center">
-            {aiSuggestion?.isLoading ? (
-              <span className="flex-grow text-right px-2 animate-pulse">جاري البحث عن حل ذكي...</span>
-            ) : (
-              <>
-                <span className="flex-grow text-right px-2">
-                  {aiSuggestion?.message || error?.message}
-                </span>
-                {aiSuggestion?.fix && (
-                    <button onClick={onApplyAiFix} className="bg-none border-none text-sky-500 dark:text-[#4fc3f7] font-bold cursor-pointer mr-1 whitespace-nowrap">[✨ تصحيح آلي]</button>
-                )}
-              </>
-            )}
+            <>
+              <span className="flex-grow text-right px-2">
+                {aiSuggestion?.message || error?.message}
+              </span>
+              {aiSuggestion?.fix && (
+                  <button onClick={onApplyAiFix} className="bg-none border-none text-sky-500 dark:text-[#4fc3f7] font-bold cursor-pointer mr-1 whitespace-nowrap">[✨ تصحيح آلي]</button>
+              )}
+            </>
           </div>
         )}
       </div>

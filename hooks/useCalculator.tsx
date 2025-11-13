@@ -1,7 +1,7 @@
+
 import { useState, useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { parseExpression } from '../services/calculationEngine';
-import { getAiFix } from '../services/geminiService';
 import { getLocalFix, findErrorDetails } from '../services/localErrorFixer';
 import { HistoryItem, TaxSettings, ErrorState, AISuggestion } from '../types';
 import { defaultButtonLayout } from '../constants';
@@ -198,18 +198,12 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         const errorMessage = e.message || 'خطأ غير معروف';
         setError({ message: errorMessage, details: findErrorDetails(expression, errorMessage) });
         setCalculationExecuted(false);
-        setAiSuggestion({ message: 'جاري البحث عن حل ذكي...', fix: null, isLoading: true });
-
-        const geminiFix = await getAiFix(expression, errorMessage);
-        if (geminiFix && geminiFix.fix) {
-            setAiSuggestion({ ...geminiFix, isLoading: false });
+        
+        const localFix = getLocalFix(expression);
+        if (localFix && localFix.fix) {
+            setAiSuggestion({ ...localFix });
         } else {
-            const localFix = getLocalFix(expression);
-            if (localFix && localFix.fix) {
-                setAiSuggestion({ ...localFix, isLoading: false });
-            } else {
-                setAiSuggestion(null);
-            }
+            setAiSuggestion(null);
         }
     }
   }, [input, taxSettings, setHistory, vibrationEnabled, maxHistory, setLastAnswer]);
