@@ -121,7 +121,7 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         setError(null);
         setAiSuggestion(null);
         setLastExpression(null);
-        const forbiddenStarters = ['+', '×', '÷', '%', ')'];
+        const forbiddenStarters = ['+', '-', '×', '÷', '%', ')'];
         setInput(forbiddenStarters.includes(value) ? '0' : value);
         setCalculationExecuted(false);
         return;
@@ -141,11 +141,10 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     setInput(prev => {
       // Rule: Prevent starting with most operators.
       if (prev === '0') {
-        const forbiddenStarters = ['+', '×', '÷', '%', ')'];
+        const forbiddenStarters = ['+', '-', '×', '÷', '%', ')'];
         if (forbiddenStarters.includes(value)) {
             return prev;
         }
-        if (value === '-') return '-';
         if (value === '.') return '0.';
         if (value === '(') return '(';
         return value; // Replace "0" with number
