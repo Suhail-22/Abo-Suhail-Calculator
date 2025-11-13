@@ -115,32 +115,71 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         playSound('number');
     }
     vibrate(20);
+
+    // If an error was present, start a fresh calculation.
+    if (error) {
+        setError(null);
+        setAiSuggestion(null);
+        setLastExpression(null);
+        const forbiddenStarters = ['+', '×', '÷', '%', ')'];
+        setInput(forbiddenStarters.includes(value) ? '0' : value);
+        setCalculationExecuted(false);
+        return;
+    }
+
     setError(null);
     setAiSuggestion(null);
     setLastExpression(null);
+
     if (calculationExecuted) {
       const isOperator = ['+', '-', '×', '÷'].includes(value);
       setInput(isOperator ? input + value : value);
       setCalculationExecuted(false);
       return;
     }
+
     setInput(prev => {
-      if (prev === '0' && !['.', '(', ')'].includes(value)) return value;
+      // Rule: Prevent starting with most operators.
+      if (prev === '0') {
+        const forbiddenStarters = ['+', '×', '÷', '%', ')'];
+        if (forbiddenStarters.includes(value)) {
+            return prev;
+        }
+        if (value === '-') return '-';
+        if (value === '.') return '0.';
+        if (value === '(') return '(';
+        return value; // Replace "0" with number
+      }
       
       const lastChar = prev.slice(-1);
       const operators = ['+', '-', '×', '÷'];
+      const highPrecedenceOperators = ['×', '÷'];
 
-      if (lastChar === ')' && !['+', '-', '×', '÷', '%', ')'].includes(value)) {
+      // Rule: Prevent operators right after an open parenthesis.
+      if (lastChar === '(' && ['+', '×', '÷', '%', ')'].includes(value)) {
+          return prev;
+      }
+      
+      // Rule: Auto-insert multiplication after a closing parenthesis if a number/paren/ans follows.
+      if (lastChar === ')' && !operators.concat(['%', ')', '.']).includes(value)) {
           return prev + '×' + value;
       }
 
-      if (operators.includes(value) && operators.includes(lastChar)) {
+      const isValueAnOperator = operators.includes(value);
+      const isLastCharAnOperator = operators.includes(lastChar);
+      
+      if (isValueAnOperator && isLastCharAnOperator) {
+        // Allow a '-' to follow '×' or '÷' for negative numbers (e.g., 5×- or 10÷-)
+        if (highPrecedenceOperators.includes(lastChar) && value === '-') {
+          return prev + value;
+        }
+        // Otherwise, replace the last operator with the new one (e.g., 5+- becomes 5-)
         return prev.slice(0, -1) + value;
       }
       
       return prev + value;
     });
-  }, [calculationExecuted, input, vibrationEnabled, playSound]);
+  }, [calculationExecuted, input, vibrationEnabled, playSound, error]);
 
    const toggleSign = useCallback(() => {
     playSound('function');
