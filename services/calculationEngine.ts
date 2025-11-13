@@ -1,15 +1,14 @@
 export function preprocessExpression(expr: string): string {
     if (!expr) return expr;
-    // Handles X% -> (X/100)
+    // Handles X% -> (X/100). The logic for %X has been removed as it was considered an error by the user.
     let pExpr = expr.replace(/(\d+(?:\.\d*)?|\.\d+)%/g, '($1/100)');
-    // Handles %X -> (X/100)
-    pExpr = pExpr.replace(/%(\d+(?:\.\d*)?|\.\d+)/g, '($1/100)');
     return pExpr;
 }
 
 export function parseExpression(expr: string): number {
     if (!expr) return 0;
-    expr = expr.replace(/(?<=^|[-+*/(])-/g, 'N');
+    // Replaced lookbehind `(?<=^|[-+*/(])` with `(^|[-+*/(])` and a backreference `$1` for broader browser compatibility.
+    expr = expr.replace(/(^|[-+*/(])-/g, '$1N');
     const tokens: (number | string)[] = [];
     let i = 0;
     while (i < expr.length) {

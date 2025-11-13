@@ -76,14 +76,11 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   } else {
     try {
       const processedExpr = preprocessExpression(input);
-      if (processedExpr.includes('%')) {
-          liveResult = '...';
-      } else {
-        const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(?<=^|\()(\+)/g, '');
-        const result = parseExpression(safeExpr);
-        if (!isNaN(result) && isFinite(result)) {
-          liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
-        }
+      // Replaced lookbehind `(?<=^|\()(\+)` with compatible version `(^|\()(\+)`
+      const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
+      const result = parseExpression(safeExpr);
+      if (!isNaN(result) && isFinite(result)) {
+        liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
       }
     } catch (e) {
       liveResult = '...';

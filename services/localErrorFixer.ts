@@ -17,7 +17,15 @@ export function getLocalFix(expression: string): { fix: string; message: string;
         }
     }
 
-    // Rule 3: Fix trailing operator (e.g., 5+ -> 5, or 5%-% -> 5%)
+    // Rule 3: Fix misplaced percentage sign (e.g., ÷%2 -> ÷2, %5 -> 5)
+    const originalExprAfterNewRule = fixedExpr;
+    // This regex finds a % that is either at the start of the string, or not preceded by a number/dot, and removes it.
+    fixedExpr = fixedExpr.replace(/(^|[^.\d])%(\d)/g, '$1$2');
+    if (fixedExpr !== originalExprAfterNewRule) {
+      return { fix: fixedExpr, message: 'تم إصلاح موضع علامة النسبة المئوية.' };
+    }
+
+    // Rule 4: Fix trailing operator (e.g., 5+ -> 5, or 5%-% -> 5%)
     const trailingOpRegex = /[+\-×÷%]+$/;
     if (trailingOpRegex.test(fixedExpr.trim())) {
         const cleanedExpr = fixedExpr.trim().replace(trailingOpRegex, '');
@@ -26,7 +34,7 @@ export function getLocalFix(expression: string): { fix: string; message: string;
         }
     }
     
-    // Rule 4: Mismatched parentheses (e.g., (9-2 -> (9-2))
+    // Rule 5: Mismatched parentheses (e.g., (9-2 -> (9-2))
     const openParenCount = (fixedExpr.match(/\(/g) || []).length;
     const closeParenCount = (fixedExpr.match(/\)/g) || []).length;
     if (openParenCount > closeParenCount) {

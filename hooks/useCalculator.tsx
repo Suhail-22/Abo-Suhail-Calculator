@@ -254,10 +254,8 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     if (expression === '0') return;
     try {
       const processedExpr = preprocessExpression(expression);
-      if (processedExpr.includes('%')) {
-        throw new Error('تنسيق النسبة المئوية غير صالح.');
-      }
-      const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(?<=^|\()(\+)/g, '');
+      // Replaced lookbehind `(?<=^|\()(\+)` with compatible version `(^|\()(\+)`
+      const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
       let result = parseExpression(safeExpr);
 
       if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
@@ -308,7 +306,11 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       setCalculationExecuted(true);
       setLastExpression(expression);
     } catch (e: any) {
-        const errorMessage = e.message || 'خطأ غير معروف';
+        let errorMessage = e.message || 'خطأ غير معروف';
+        // Intercept the generic "Unknown symbol" error and provide a more specific one for percentages.
+        if (errorMessage === 'رمز غير معروف' && expression.includes('%')) {
+            errorMessage = 'تنسيق النسبة المئوية غير صالح.';
+        }
         setError({ message: errorMessage, details: findErrorDetails(expression, errorMessage) });
         setCalculationExecuted(false);
         setLastExpression(null);
