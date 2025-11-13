@@ -6,7 +6,7 @@
     {
       "src": "/assets/icon.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512"
+      "sizes": "any"
     },
     {
       "src": "/assets/icon-192.png",
@@ -21,7 +21,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#F0F4F8",
-  "background_color": "#F0F4F8",
+  "theme_color": "#0F172A",
+  "background_color": "#0F172A",
   "lang": "ar"
 }
