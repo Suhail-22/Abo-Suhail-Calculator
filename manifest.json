@@ -6,22 +6,28 @@
   "scope": ".",
   "icons": [
     {
-      "src": "assets/icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icon-192.png",
+      "src": "./assets/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "./assets/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": ".",
@@ -41,14 +47,14 @@
   ],
   "screenshots": [
     {
-      "src": "assets/screenshot-narrow.png",
+      "src": "./assets/screenshot-narrow.png",
       "sizes": "540x1170",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "الواجهة الرئيسية للآلة الحاسبة"
     },
     {
-      "src": "assets/screenshot-wide.png",
+      "src": "./assets/screenshot-wide.png",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
@@ -63,7 +69,7 @@
       "url": "/?history=true",
       "icons": [
         {
-          "src": "assets/icon-192.png",
+          "src": "./assets/icon-192.png",
           "sizes": "192x192",
           "type": "image/png",
           "purpose": "any"
@@ -77,7 +83,7 @@
       "url": "/",
       "icons": [
         {
-          "src": "assets/icon-192.png",
+          "src": "./assets/icon-192.png",
           "sizes": "192x192",
           "type": "image/png",
           "purpose": "any"
