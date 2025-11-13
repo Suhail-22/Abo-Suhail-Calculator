@@ -1,3 +1,11 @@
+export function preprocessExpression(expr: string): string {
+    if (!expr) return expr;
+    // Handles X% -> (X/100)
+    let pExpr = expr.replace(/(\d+(?:\.\d*)?|\.\d+)%/g, '($1/100)');
+    // Handles %X -> (X/100)
+    pExpr = pExpr.replace(/%(\d+(?:\.\d*)?|\.\d+)/g, '($1/100)');
+    return pExpr;
+}
 
 export function parseExpression(expr: string): number {
     if (!expr) return 0;

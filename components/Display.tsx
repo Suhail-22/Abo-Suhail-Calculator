@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { TaxSettings, ErrorState, AISuggestion } from '../types';
-import { parseExpression } from '../services/calculationEngine';
+import { parseExpression, preprocessExpression } from '../services/calculationEngine';
 
 interface DisplayProps {
   input: string;
@@ -76,10 +75,15 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
     liveResult = input;
   } else {
     try {
-      const safeExpr = input.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100').replace(/(?<=^|\()(\+)/g, '');
-      const result = parseExpression(safeExpr);
-      if (!isNaN(result) && isFinite(result)) {
-        liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
+      const processedExpr = preprocessExpression(input);
+      if (processedExpr.includes('%')) {
+          liveResult = '...';
+      } else {
+        const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(?<=^|\()(\+)/g, '');
+        const result = parseExpression(safeExpr);
+        if (!isNaN(result) && isFinite(result)) {
+          liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
+        }
       }
     } catch (e) {
       liveResult = '...';

@@ -1,23 +1,29 @@
-
 export function getLocalFix(expression: string): { fix: string; message: string; } {
     let fixedExpr = expression;
     
     // Rule 1: Fix duplicate operators (e.g., 5++3 -> 5+3)
+    const originalExprAfterRule1 = fixedExpr;
     fixedExpr = fixedExpr.replace(/([+\-×÷])\1+/g, '$1');
-    if (fixedExpr !== expression) {
+    if (fixedExpr !== originalExprAfterRule1) {
         return { fix: fixedExpr, message: 'تمت إزالة عامل التشغيل المكرر.' };
     }
     
     // Rule 2: Handle empty parentheses (e.g., 6*() -> 6)
     if (fixedExpr.includes('()')) {
+        const originalExprAfterRule2 = fixedExpr;
         fixedExpr = fixedExpr.replace(/([+\-×÷]?)\(\)/g, '');
-        return { fix: fixedExpr || '0', message: 'تمت إزالة الأقواس الفارغة.' };
+        if (fixedExpr !== originalExprAfterRule2) {
+             return { fix: fixedExpr || '0', message: 'تمت إزالة الأقواس الفارغة.' };
+        }
     }
 
-    // Rule 3: Fix trailing operator (e.g., 5+ -> 5)
-    if (/[+\-×÷]$/.test(fixedExpr.trim())) {
-        fixedExpr = fixedExpr.trim().slice(0, -1);
-        return { fix: fixedExpr, message: 'تمت إزالة عامل التشغيل في النهاية.' };
+    // Rule 3: Fix trailing operator (e.g., 5+ -> 5, or 5%-% -> 5%)
+    const trailingOpRegex = /[+\-×÷%]+$/;
+    if (trailingOpRegex.test(fixedExpr.trim())) {
+        const cleanedExpr = fixedExpr.trim().replace(trailingOpRegex, '');
+        if (cleanedExpr !== fixedExpr.trim()) {
+            return { fix: cleanedExpr || '0', message: 'تمت إزالة عامل التشغيل في النهاية.' };
+        }
     }
     
     // Rule 4: Mismatched parentheses (e.g., (9-2 -> (9-2))
@@ -33,6 +39,16 @@ export function getLocalFix(expression: string): { fix: string; message: string;
 }
 
 export function findErrorDetails(expression: string, message: string): { pre: string; highlight: string; post: string; } | null {
+    if (message.includes('تنسيق النسبة المئوية غير صالح')) {
+        const match = expression.match(/(?<![\d.])%/); // Find '%' not preceded by a digit or dot
+        if (match && typeof match.index === 'number') {
+            return {
+                pre: expression.substring(0, match.index),
+                highlight: '%',
+                post: expression.substring(match.index + 1)
+            };
+        }
+    }
     if (message.includes('أقواس غير متوازنة')) {
         let balance = 0;
         for (let i = 0; i < expression.length; i++) {

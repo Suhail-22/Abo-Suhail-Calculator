@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import { parseExpression } from '../services/calculationEngine';
+import { parseExpression, preprocessExpression } from '../services/calculationEngine';
 import { getLocalFix, findErrorDetails } from '../services/localErrorFixer';
 import { HistoryItem, TaxSettings, ErrorState, AISuggestion } from '../types';
 import { defaultButtonLayout } from '../constants';
@@ -253,8 +253,13 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     const expression = input;
     if (expression === '0') return;
     try {
-      const safeExpr = expression.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100').replace(/(?<=^|\()(\+)/g, '');
+      const processedExpr = preprocessExpression(expression);
+      if (processedExpr.includes('%')) {
+        throw new Error('تنسيق النسبة المئوية غير صالح.');
+      }
+      const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(?<=^|\()(\+)/g, '');
       let result = parseExpression(safeExpr);
+
       if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
         throw new Error('تعبير غير صالح رياضيًا.');
       }
