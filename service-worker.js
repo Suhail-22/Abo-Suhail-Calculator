@@ -1,12 +1,12 @@
 
 const CACHE_NAME = 'ai-calculator-v2';
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/assets/icon.svg',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './assets/icon.svg',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
   'https://aistudiocdn.com/react@^19.2.0',
