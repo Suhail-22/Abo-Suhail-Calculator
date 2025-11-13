@@ -2,6 +2,7 @@
 {
   "short_name": "Abo Suhail Calc",
   "name": "Abo Suhail Calculator",
+  "description": "آلة حاسبة متقدمة وذكية لنظام أندرويد و ويندوز و ايفون، مع سجل عمليات، حسابات ضريبية، وتخصيص كامل.",
   "icons": [
     {
       "src": "./assets/icon.svg",
@@ -23,5 +24,59 @@
   "display": "standalone",
   "theme_color": "#0F172A",
   "background_color": "#0F172A",
-  "lang": "ar"
+  "lang": "ar",
+  "categories": [
+    "utilities",
+    "productivity",
+    "education"
+  ],
+  "screenshots": [
+    {
+      "src": "./assets/screenshot-narrow.png",
+      "sizes": "540x1170",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الواجهة الرئيسية للآلة الحاسبة"
+    },
+    {
+      "src": "./assets/screenshot-wide.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "عرض الآلة الحاسبة على شاشة عريضة"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "سجل العمليات",
+      "short_name": "السجل",
+      "description": "عرض سجل العمليات المحفوظة",
+      "url": "/?history=true",
+      "icons": [
+        {
+          "src": "./assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "عملية جديدة",
+      "short_name": "جديد",
+      "description": "بدء عملية حسابية جديدة",
+      "url": "/",
+      "icons": [
+        {
+          "src": "./assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "text": "text"
+    }
+  }
 }

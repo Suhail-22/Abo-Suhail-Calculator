@@ -249,14 +249,16 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       );
   }, [setHistory]);
   
+  const actions = useMemo(() => ({
+    append, clearAll, backspace, calculate, toggleSign, handleParenthesis, appendAnswer, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote
+  }), [append, clearAll, backspace, calculate, toggleSign, handleParenthesis, appendAnswer, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote]);
+
   return {
     input, history, error, aiSuggestion, isCalculationExecuted: calculationExecuted, entryCount,
     settings: {
       vibrationEnabled, setVibrationEnabled,
       taxSettings, setTaxSettings, maxHistory, setMaxHistory, buttonLayout
     },
-    actions: {
-      append, clearAll, backspace, calculate, toggleSign, handleParenthesis, appendAnswer, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote
-    }
+    actions
   };
 };

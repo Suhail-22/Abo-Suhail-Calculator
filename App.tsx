@@ -47,8 +47,14 @@ function App() {
     if (params.get('history') === 'true') {
         setIsHistoryOpen(true);
         window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (params.has('text')) {
+        const sharedText = params.get('text');
+        if (sharedText) {
+            calculator.actions.updateInput(sharedText);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
     }
-  }, []);
+  }, [calculator.actions]);
   
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
