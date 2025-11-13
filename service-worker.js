@@ -9,8 +9,8 @@ const URLS_TO_CACHE = [
   './assets/icon-512.png',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
-  'https://aistudiocdn.com/react@^19.2.0',
-  'https://aistudiocdn.com/react-dom@^19.2.0/client'
+  'https://esm.sh/react@18.3.1',
+  'https://esm.sh/react-dom@18.3.1/client'
 ];
 
 self.addEventListener('install', event => {

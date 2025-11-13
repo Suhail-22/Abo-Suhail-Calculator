@@ -10,7 +10,7 @@ const AboutPanel: React.FC<AboutPanelProps> = ({ isOpen, onClose }) => {
   return (
     <div className={`fixed top-0 bottom-0 right-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto transition-transform duration-300 ease-in-out border-l-2 border-[var(--border-primary)] transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[var(--accent-color)] text-2xl font-bold">ℹ️ حول الآلة الحاسبة</h2>
+        <h2 className="text-[var(--accent-color)] text-2xl font-bold">ℹ️ حول Abo Suhail Calculator</h2>
         <button onClick={onClose} className="text-2xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">✕</button>
       </div>
       <div className="bg-[var(--bg-inset-light)] rounded-2xl p-4 mb-6 border border-[var(--border-secondary)]">
