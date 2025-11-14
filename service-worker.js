@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-calculator-v14'; // Incremented version to trigger update
+const CACHE_NAME = 'ai-calculator-v16'; // Incremented version to trigger update
 const URLS_TO_CACHE = [
   '/',
   'index.html',
@@ -46,47 +46,37 @@ self.addEventListener('install', event => {
       })
       .catch(error => {
         console.error('Failed to cache app shell during install:', error);
+        // IMPORTANT: Re-throwing the error ensures that if caching fails,
+        // the service worker installation will be aborted. This prevents a
+        // broken, partially cached version of the app from being activated.
+        throw error;
       })
   );
 });
 
 self.addEventListener('fetch', event => {
-  // Use a cache-first strategy for all requests to ensure offline functionality.
+  // Use a network-first, cache-fallback strategy.
+  // This is good for keeping the app up-to-date, while providing robust offline support.
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        // If a cached response is found, return it.
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        // If not in cache, fetch from the network.
-        return fetch(event.request).then(
-          networkResponse => {
-            // A response is a stream and can only be consumed once.
-            // We need to clone it to have one copy for the browser and one for the cache.
-            const responseToCache = networkResponse.clone();
-
-            // Cache the new response if it's a valid, successful, non-opaque response.
-            if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, responseToCache);
-              });
+    fetch(event.request)
+      .then(networkResponse => {
+        // If the network request is successful, cache it for future offline use.
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => {
+            // Only cache valid responses to avoid caching errors.
+            if (responseToCache && responseToCache.status === 200) {
+                 cache.put(event.request, responseToCache);
             }
-
-            return networkResponse;
-          }
-        ).catch(error => {
-          // When a network request fails (offline), provide a fallback.
-          console.error('Service Worker fetch failed for:', event.request.url, error);
-
-          // For navigation requests, serve the main app page from the cache.
-          if (event.request.mode === 'navigate') {
-            return caches.match('index.html');
-          }
-          
-          // For other requests (e.g. scripts, images), there's no generic fallback.
-          // The request will fail, and the browser will handle it.
+        });
+        return networkResponse;
+      })
+      .catch(() => {
+        // If the network request fails (user is offline), try to serve the response from the cache.
+        return caches.match(event.request).then(cachedResponse => {
+            // If we have a cached response, return it.
+            // Otherwise, for navigation requests, return the cached index.html as a fallback for the SPA.
+            // For all other requests, the promise will resolve to 'undefined' and the fetch will fail as expected.
+            return cachedResponse || (event.request.mode === 'navigate' ? caches.match('index.html') : undefined);
         });
       })
   );
