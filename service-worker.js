@@ -46,40 +46,32 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Handle navigation requests with a cache-first strategy.
+  // Use a network-first strategy for navigation to get the latest app shell.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('index.html') // Always serve the main app shell for navigation.
-      .then(response => {
-        // If the app shell is not in the cache for some reason, fetch it from the network.
-        return response || fetch(event.request);
+      fetch(event.request).catch(() => {
+        return caches.match('index.html');
       })
     );
     return;
   }
 
-  // Handle asset requests with a cache-first strategy.
+  // Use a cache-first strategy for all other assets.
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // If the asset is in the cache, return it.
-        if (response) {
-          return response;
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
         }
-
-        // If the asset is not in the cache, fetch it from the network.
-        return fetch(event.request).then(networkResponse => {
-          // Check if we received a valid response before caching
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-          }
-          return networkResponse;
-        });
-      })
+        return networkResponse;
+      });
+    })
   );
 });
 
