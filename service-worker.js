@@ -1,6 +1,6 @@
 
-const APP_CACHE_NAME = 'ai-calculator-app-v18';
-const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v18';
+const APP_CACHE_NAME = 'ai-calculator-app-v19';
+const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v19';
 const APP_SHELL_URLS = [
   '/',
   'index.html',
@@ -65,49 +65,49 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Using a "Cache-first, falling back to network" strategy for all requests.
+// This is robust for offline-first functionality.
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Strategy 1: Stale-while-revalidate for cross-origin resources (CDNs, fonts, etc.)
-  if (url.origin !== self.location.origin) {
-    event.respondWith(
-      caches.open(DYNAMIC_CACHE_NAME).then(async (cache) => {
-        const cachedResponse = await cache.match(event.request);
-        
-        const fetchPromise = fetch(event.request).then(networkResponse => {
-          if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(err => {
-          console.warn(`Fetch failed for ${event.request.url}; using cached response if available.`, err);
-        });
-
-        return cachedResponse || fetchPromise;
-      })
-    );
-    return;
-  }
-
-  // Strategy 2: Cache-first for same-origin app shell resources
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then(networkResponse => {
-        return caches.open(DYNAMIC_CACHE_NAME).then(cache => {
-            cache.put(event.request, networkResponse.clone());
+    caches.match(event.request)
+      .then(cachedResponse => {
+        // Cache hit - return response
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        // Not in cache - go to network
+        return fetch(event.request).then(
+          networkResponse => {
+            // Check if we received a valid response.
+            // Opaque responses are for no-cors requests to third-party resources.
+            if (!networkResponse || (networkResponse.status !== 200 && networkResponse.type !== 'opaque')) {
+              return networkResponse;
+            }
+
+            // Clone the response because it's a stream.
+            const responseToCache = networkResponse.clone();
+
+            // All runtime caching goes into the dynamic cache.
+            caches.open(DYNAMIC_CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
             return networkResponse;
-        });
-      });
-    }).catch(() => {
-      if (event.request.mode === 'navigate') {
-        return caches.match('/');
-      }
-    })
+          }
+        );
+      })
+      .catch(() => {
+        // If both cache and network fail, and it's a navigation request,
+        // serve the offline fallback page from the app shell cache.
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+      })
   );
 });
+
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
