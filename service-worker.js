@@ -1,8 +1,9 @@
 
 
 
-const APP_CACHE_NAME = 'ai-calculator-app-v21';
-const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v21';
+
+const APP_CACHE_NAME = 'ai-calculator-app-v22';
+const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v22';
 const APP_SHELL_URLS = [
   '.',
   'index.html',
@@ -42,6 +43,8 @@ const APP_SHELL_URLS = [
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
   'https://esm.sh/react@18.3.1',
   'https://esm.sh/react-dom@18.3.1/client',
+  'https://esm.sh/react@18.3.1/jsx-runtime',
+  'https://esm.sh/scheduler@0.23.2',
 ];
 
 self.addEventListener('install', event => {
@@ -75,45 +78,56 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Using a "Cache-first, falling back to network" strategy for all requests.
-// This is robust for offline-first functionality.
 self.addEventListener('fetch', event => {
+  // Strategy: Network-first for navigation requests (HTML pages).
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          // If we get a response, cache it and return it.
+          const responseToCache = networkResponse.clone();
+          caches.open(DYNAMIC_CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+          return networkResponse;
+        })
+        .catch(() => {
+          // If the network fails, serve the main page from the app shell cache.
+          // We look for 'index.html' specifically as a robust fallback.
+          return caches.match('index.html');
+        })
+    );
+    return;
+  }
+
+  // Strategy: Cache-first for all other requests (JS, CSS, images, fonts, etc.).
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {
-        // Cache hit - return response
+        // If we have a response in the cache, we return it.
         if (cachedResponse) {
           return cachedResponse;
         }
 
-        // Not in cache - go to network
+        // If it's not in the cache, we fetch it from the network.
         return fetch(event.request).then(
           networkResponse => {
             // Check if we received a valid response.
-            // Opaque responses are for no-cors requests to third-party resources.
+            // We don't cache error responses (e.g. 404).
+            // Opaque responses are for no-cors requests, we cache them but cannot inspect them.
             if (!networkResponse || (networkResponse.status !== 200 && networkResponse.type !== 'opaque')) {
               return networkResponse;
             }
 
-            // Clone the response because it's a stream.
+            // Clone and cache the response for next time.
             const responseToCache = networkResponse.clone();
-
-            // All runtime caching goes into the dynamic cache.
-            caches.open(DYNAMIC_CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
+            caches.open(DYNAMIC_CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
 
             return networkResponse;
           }
         );
-      })
-      .catch(() => {
-        // If both cache and network fail, and it's a navigation request,
-        // serve the offline fallback page from the app shell cache.
-        if (event.request.mode === 'navigate') {
-          return caches.match('.');
-        }
       })
   );
 });
