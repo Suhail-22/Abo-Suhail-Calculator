@@ -1,4 +1,5 @@
-const CACHE_NAME = 'ai-calculator-v16'; // Incremented version to trigger update
+
+const CACHE_NAME = 'ai-calculator-v17'; // Incremented version to trigger update
 const URLS_TO_CACHE = [
   '/',
   'index.html',
@@ -30,10 +31,21 @@ const URLS_TO_CACHE = [
   'assets/icon-512.png',
   'assets/screenshot-narrow.png',
   'assets/screenshot-wide.png',
+  // External resources
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
+  // React dependencies for offline functionality
   'https://esm.sh/react@18.3.1',
-  'https://esm.sh/react-dom@18.3.1/client'
+  'https://esm.sh/react-dom@18.3.1/client',
+  'https://esm.sh/react@18.3.1/jsx-runtime',
+  'https://esm.sh/scheduler',
+  // Fonts for offline functionality
+  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
+  'https://fonts.gstatic.com/s/tajawal/v10/Iura6YBj_oCad4k1nzSBC45I.woff2',
+  'https://fonts.gstatic.com/s/tajawal/v10/Iura6YBj_oCad4k1nzSBC75J.woff2',
+  'https://fonts.gstatic.com/s/tajawal/v10/Iura6YBj_oCad4k1nzSBC2pJ.woff2',
+  'https://fonts.gstatic.com/s/cairo/v28/SLXVc1nY6HkvangtZmpQdkhYl0w.woff2',
+  'https://fonts.gstatic.com/s/almarai/v15/tssoApxBaYOoEJnuOV0w2-U.woff2',
+  'https://fonts.gstatic.com/s/almarai/v15/tsstApxBaYOoEJnuOV0wz-pO4A.woff2'
 ];
 
 self.addEventListener('install', event => {
