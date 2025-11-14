@@ -45,12 +45,15 @@ const Header: React.FC<HeaderProps> = ({ taxSettings, onToggleSettings, onShare,
         <div className={`text-sm py-1 px-2.5 rounded-xl bg-[var(--bg-inset)] text-[var(--text-secondary)] whitespace-nowrap transition-opacity duration-300 truncate ${isEnabled ? 'opacity-100' : 'opacity-60'}`}>
           الضريبة: <span className="font-bold text-[var(--text-primary)]">{getTaxRateLabel()}</span>
         </div>
-         <div className="text-sm py-1 px-2.5 rounded-xl bg-[var(--bg-inset)] text-[var(--text-secondary)] whitespace-nowrap truncate">
-          الإدخالات: <span className="font-bold text-[var(--text-primary)]">{entryCountDisplay}</span>
-        </div>
       </div>
 
       <div className="flex items-center gap-2">
+        <div className="relative">
+          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-[var(--bg-inset)] text-[var(--text-secondary)]" aria-label="عدد الإدخالات">
+              <Icon name='entries' />
+          </div>
+          {entryCountDisplay > 0 && <span className="absolute -top-1 -right-1.5 bg-blue-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center pointer-events-none">{entryCountDisplay > 99 ? '99+' : entryCountDisplay}</span>}
+        </div>
         <div className="relative">
           <HeaderButton onClick={onToggleHistory} aria-label="فتح السجل"><Icon name='history' /></HeaderButton>
           {historyCount > 0 && <span className="absolute -top-1 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center pointer-events-none">{historyCount > 99 ? '99+' : historyCount}</span>}

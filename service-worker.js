@@ -46,14 +46,14 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Handle navigation requests with a network-first strategy.
+  // Handle navigation requests with a cache-first strategy.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          // If the network request fails, serve the main app shell from the cache.
-          return caches.match('/');
-        })
+      caches.match('index.html') // Always serve the main app shell for navigation.
+      .then(response => {
+        // If the app shell is not in the cache for some reason, fetch it from the network.
+        return response || fetch(event.request);
+      })
     );
     return;
   }
