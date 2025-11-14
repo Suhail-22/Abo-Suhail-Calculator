@@ -6,19 +6,23 @@ if (workbox) {
   workbox.core.skipWaiting();
   workbox.core.clientsClaim();
 
-  // Define all the files that make up the app shell.
-  // This ensures that the entire app is available offline after the first visit.
-  const appShellFiles = [
+  // A list of local files and critical third-party resources to be precached.
+  // Precaching ensures these are available offline from the very first visit.
+  const filesToPrecache = [
+    // App Shell
     '/',
     'index.html',
     'manifest.json',
     'offline.html',
+    
+    // Assets
     'assets/icon.svg',
     'assets/icon-192.png',
     'assets/icon-512.png',
     'assets/screenshot-narrow.png',
     'assets/screenshot-wide.png',
-    // All JS/TS modules required for the app to run
+    
+    // JS/TS Modules
     'index.tsx',
     'App.tsx',
     'types.ts',
@@ -41,21 +45,19 @@ if (workbox) {
     'hooks/useLocalStorage.tsx',
     'services/calculationEngine.ts',
     'services/geminiService.ts',
-    'services/localErrorFixer.ts'
+    'services/localErrorFixer.ts',
+
+    // Third-party Libraries & Fonts
+    'https://cdn.tailwindcss.com',
+    'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
+    'https://esm.sh/react@18.3.1',
+    'https://esm.sh/react-dom@18.3.1/client',
   ];
 
-  // Pre-cache all the app shell files.
-  workbox.precaching.precacheAndRoute(appShellFiles.map(url => ({ url, revision: null })));
+  // Pre-cache all the essential files.
+  workbox.precaching.precacheAndRoute(filesToPrecache.map(url => ({ url, revision: null })));
 
-  // Caching strategy for Google Fonts (stylesheets)
-  workbox.routing.registerRoute(
-    ({url}) => url.origin === 'https://fonts.googleapis.com',
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'google-fonts-stylesheets',
-    })
-  );
-
-  // Caching strategy for Google Fonts (webfonts)
+  // Runtime caching for Google Fonts webfonts (loaded from the precached CSS)
   workbox.routing.registerRoute(
     ({url}) => url.origin === 'https://fonts.gstatic.com',
     new workbox.strategies.CacheFirst({
@@ -72,11 +74,12 @@ if (workbox) {
     })
   );
 
-  // Caching strategy for Tailwind CSS and esm.sh scripts (JS modules)
+  // Runtime caching for any other esm.sh scripts (JS modules dependencies)
+  // This acts as a fallback for any modules loaded dynamically by React.
   workbox.routing.registerRoute(
-    ({ url }) => url.origin === 'https://cdn.tailwindcss.com' || url.origin === 'https://esm.sh',
+    ({ url }) => url.origin === 'https://esm.sh',
     new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'third-party-scripts-and-styles',
+      cacheName: 'third-party-scripts',
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200]
@@ -88,10 +91,8 @@ if (workbox) {
     })
   );
 
-  // The runtime caching for app scripts is no longer needed as they are all precached.
-  // This makes the offline experience much more reliable.
-
   // Add a catch handler for navigation requests to provide a graceful offline fallback.
+  // This is a safety net in case precaching fails or for pages not explicitly cached.
   workbox.routing.setCatchHandler(async ({ request }) => {
     if (request.destination === 'document') {
       const offlinePage = await workbox.precaching.matchPrecache('offline.html');
