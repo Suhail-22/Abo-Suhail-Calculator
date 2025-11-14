@@ -256,7 +256,7 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     });
   }, [calculationExecuted, vibrationEnabled, playSound]);
 
-  const calculate = useCallback(async () => {
+  const calculate = useCallback(() => {
     if (calculationExecuted) {
       return;
     }

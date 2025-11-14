@@ -5,6 +5,7 @@ import Calculator from './components/Calculator';
 import Overlay from './components/Overlay';
 import Notification from './components/Notification';
 import ConfirmationDialog from './components/ConfirmationDialog';
+import { HistoryItem } from './types';
 
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const HistoryPanel = lazy(() => import('./components/HistoryPanel'));
@@ -143,7 +144,7 @@ function App() {
     });
   }, [calculator.history, calculator.actions.clearHistory, showNotification]);
   
-  const handleDeleteHistoryItem = useCallback((item: any) => {
+  const handleDeleteHistoryItem = useCallback((item: HistoryItem) => {
     setConfirmation({
         isOpen: true,
         title: 'حذف العملية',
