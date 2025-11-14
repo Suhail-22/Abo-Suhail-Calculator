@@ -115,7 +115,7 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
       }
       const taxLabel = 'الضريبة';
       taxAmount = `${taxLabel}: ${taxValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
-      totalWithTax = `${secondaryLabel}: ${secondaryLabel}: ${secondaryValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
+      totalWithTax = `${secondaryLabel}: ${secondaryValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
   }
 
   const displayBorderClass = error || aiSuggestion ? 'bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shadow-[0_0_20px_rgba(255,61,0,0.7)]' : '';
