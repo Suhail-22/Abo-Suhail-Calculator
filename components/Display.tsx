@@ -100,14 +100,41 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   } else {
     try {
       const processedExpr = preprocessExpression(input);
-      // Replaced lookbehind `(?<=^|\()(\+)` with compatible version `(^|\()(\+)`
       const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
       const result = parseExpression(safeExpr);
       if (!isNaN(result) && isFinite(result)) {
         liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
+      } else {
+        throw new Error("Invalid number"); // Force into catch block to use robust preview logic
       }
     } catch (e) {
-      liveResult = '...';
+      // For live preview, try to calculate a partial result to avoid showing "..."
+      let exprForPreview = input;
+      // If it ends with an operator, evaluate what's before it
+      if (/[+\-×÷]$/.test(exprForPreview.trim())) {
+        exprForPreview = exprForPreview.trim().slice(0, -1);
+      }
+
+      try {
+        if (!exprForPreview) {
+          liveResult = '0';
+        } else {
+          const processedExpr = preprocessExpression(exprForPreview);
+          const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
+          const result = parseExpression(safeExpr);
+          if (!isNaN(result) && isFinite(result)) {
+            liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
+          } else {
+            // As a last resort, show the last number entered
+            const numbers = input.match(/-?\d+(\.\d+)?/g);
+            liveResult = numbers ? numbers[numbers.length - 1] : '...';
+          }
+        }
+      } catch (e2) {
+        // As a last resort, show the last number entered
+        const numbers = input.match(/-?\d+(\.\d+)?/g);
+        liveResult = numbers ? numbers[numbers.length - 1] : '...';
+      }
     }
   }
   
