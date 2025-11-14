@@ -1,15 +1,15 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useCalculator } from './hooks/useCalculator';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import Calculator from './components/Calculator';
-import SettingsPanel from './components/SettingsPanel';
-import HistoryPanel from './components/HistoryPanel';
-import SupportPanel from './components/SupportPanel';
-import AboutPanel from './components/AboutPanel';
 import Overlay from './components/Overlay';
 import Notification from './components/Notification';
 import ConfirmationDialog from './components/ConfirmationDialog';
+
+const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const HistoryPanel = lazy(() => import('./components/HistoryPanel'));
+const SupportPanel = lazy(() => import('./components/SupportPanel'));
+const AboutPanel = lazy(() => import('./components/AboutPanel'));
 
 type ConfirmationState = {
   isOpen: boolean;
@@ -160,23 +160,23 @@ function App() {
   }, [calculator.actions.deleteHistoryItem, showNotification]);
 
   const onCheckForUpdates = useCallback(() => {
-    if (appUpdate.registration) {
-        // Fix: The `update()` method promise resolves with `void`, not a new registration object.
-        // We check the properties on the existing `appUpdate.registration` object after the update check completes.
-        appUpdate.registration.update().then(() => {
-            if (appUpdate.registration.installing || appUpdate.registration.waiting) {
-                showNotification("تم العثور على تحديث! سيتم التثبيت في الخلفية.");
-                setAppUpdate({ available: true, registration: appUpdate.registration });
-            } else {
-                showNotification("أنت تستخدم أحدث إصدار.");
-            }
-        }).catch(() => {
-            showNotification("فشل التحقق من التحديثات. تحقق من اتصالك بالإنترنت.");
-        });
-    } else {
-        showNotification("خدمة التحديث غير متاحة.");
-    }
+    appUpdate.registration?.update().then(() => {
+      // After update(), the state of installing/waiting might not be immediately available.
+      // The 'updatefound' event listener is the more reliable way to detect updates.
+      // For immediate feedback, we can check, but it might not catch the very latest state.
+      if (appUpdate.registration?.installing) {
+        showNotification("جاري البحث عن تحديثات...");
+      } else if (appUpdate.registration?.waiting) {
+        setAppUpdate(prev => ({ ...prev, available: true }));
+        showNotification("تم العثور على تحديث جديد!");
+      } else {
+        showNotification("أنت تستخدم أحدث إصدار.");
+      }
+    }).catch(() => {
+      showNotification("فشل التحقق من التحديثات. تحقق من اتصالك بالإنترنت.");
+    });
   }, [appUpdate.registration, showNotification]);
+
 
   const onUpdateAccepted = () => {
       if (appUpdate.registration && appUpdate.registration.waiting) {
@@ -268,38 +268,40 @@ function App() {
         />
       </div>
       <Overlay show={anyPanelOpen} onClick={closeAllPanels} />
-      <SettingsPanel
-        isOpen={isSettingsOpen}
-        onClose={closeAllPanels}
-        settings={calculator.settings}
-        theme={theme}
-        onThemeChange={setTheme}
-        fontFamily={fontFamily} 
-        setFontFamily={setFontFamily}
-        fontScale={fontScale}
-        setFontScale={setFontScale}
-        buttonTextColor={buttonTextColor}
-        setButtonTextColor={setButtonTextColor}
-        onOpenSupport={() => { closeAllPanels(); setIsSupportOpen(true); }}
-        onShowAbout={() => { closeAllPanels(); setIsAboutOpen(true); }}
-        onCheckForUpdates={onCheckForUpdates}
-      />
-      <HistoryPanel
-        isOpen={isHistoryOpen}
-        onClose={closeAllPanels}
-        history={calculator.history}
-        onClearHistory={handleClearHistory}
-        onHistoryItemClick={(item) => {
-          calculator.actions.loadFromHistory(item.expression);
-          closeAllPanels();
-        }}
-        onExportHistory={(start, end) => handleExport('txt', start, end)}
-        onExportCsvHistory={(start, end) => handleExport('csv', start, end)}
-        onUpdateHistoryItemNote={calculator.actions.updateHistoryItemNote}
-        onDeleteItem={handleDeleteHistoryItem}
-      />
-      <SupportPanel isOpen={isSupportOpen} onClose={closeAllPanels} />
-      <AboutPanel isOpen={isAboutOpen} onClose={closeAllPanels} />
+      <Suspense fallback={null}>
+        {isSettingsOpen && <SettingsPanel
+          isOpen={isSettingsOpen}
+          onClose={closeAllPanels}
+          settings={calculator.settings}
+          theme={theme}
+          onThemeChange={setTheme}
+          fontFamily={fontFamily} 
+          setFontFamily={setFontFamily}
+          fontScale={fontScale}
+          setFontScale={setFontScale}
+          buttonTextColor={buttonTextColor}
+          setButtonTextColor={setButtonTextColor}
+          onOpenSupport={() => { closeAllPanels(); setIsSupportOpen(true); }}
+          onShowAbout={() => { closeAllPanels(); setIsAboutOpen(true); }}
+          onCheckForUpdates={onCheckForUpdates}
+        />}
+        {isHistoryOpen && <HistoryPanel
+          isOpen={isHistoryOpen}
+          onClose={closeAllPanels}
+          history={calculator.history}
+          onClearHistory={handleClearHistory}
+          onHistoryItemClick={(item) => {
+            calculator.actions.loadFromHistory(item.expression);
+            closeAllPanels();
+          }}
+          onExportHistory={(start, end) => handleExport('txt', start, end)}
+          onExportCsvHistory={(start, end) => handleExport('csv', start, end)}
+          onUpdateHistoryItemNote={calculator.actions.updateHistoryItemNote}
+          onDeleteItem={handleDeleteHistoryItem}
+        />}
+        {isSupportOpen && <SupportPanel isOpen={isSupportOpen} onClose={closeAllPanels} />}
+        {isAboutOpen && <AboutPanel isOpen={isAboutOpen} onClose={closeAllPanels} />}
+      </Suspense>
       <ConfirmationDialog
         isOpen={confirmation.isOpen}
         title={confirmation.title}

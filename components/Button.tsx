@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface ButtonProps {
@@ -20,4 +19,4 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, className = '', styl
   );
 };
 
-export default Button;
+export default React.memo(Button);

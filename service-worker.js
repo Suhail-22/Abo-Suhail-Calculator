@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'ai-calculator-v7';
+const CACHE_NAME = 'ai-calculator-v9';
 const URLS_TO_CACHE = [
   '/',
   'index.html',
@@ -29,9 +28,7 @@ const URLS_TO_CACHE = [
   'hooks/useCalculator.tsx',
   'hooks/useLocalStorage.tsx',
   'services/calculationEngine.ts',
-  'services/geminiService.ts',
   'services/localErrorFixer.ts',
-  'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
   'https://esm.sh/react@18.3.1',
   'https://esm.sh/react-dom@18.3.1/client'
@@ -42,7 +39,8 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(URLS_TO_CACHE);
+        const urlsToCache = URLS_TO_CACHE.map(url => new Request(url, {cache: 'reload'}));
+        return cache.addAll(urlsToCache);
       })
   );
 });
@@ -75,7 +73,12 @@ self.addEventListener('fetch', event => {
 
             return networkResponse;
           }
-        );
+        ).catch(err => {
+            // Network request failed, try to serve from cache if possible.
+            console.warn(`Fetch failed for ${event.request.url}; returning offline page instead.`, err);
+            // You can return a generic offline page here if you have one cached.
+            // For this app, we'll just let the browser show its offline error.
+        });
       })
   );
 });
@@ -88,6 +91,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Button from './Button';
 import Icon from './Icon';
@@ -62,4 +61,4 @@ const ButtonGrid: React.FC<ButtonGridProps> = ({ onAppend, onClear, onBackspace,
   );
 };
 
-export default ButtonGrid;
+export default React.memo(ButtonGrid);

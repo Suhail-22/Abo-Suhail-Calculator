@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface IconProps {
@@ -25,4 +24,4 @@ const Icon: React.FC<IconProps> = ({ name, className = "w-6 h-6" }) => {
   );
 };
 
-export default Icon;
+export default React.memo(Icon);
