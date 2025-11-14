@@ -75,17 +75,18 @@ if (workbox) {
   );
 
   // Runtime caching for any other esm.sh scripts (JS modules dependencies)
-  // This acts as a fallback for any modules loaded dynamically by React.
+  // Switched to CacheFirst for a more robust offline-first experience.
   workbox.routing.registerRoute(
     ({ url }) => url.origin === 'https://esm.sh',
-    new workbox.strategies.StaleWhileRevalidate({
+    new workbox.strategies.CacheFirst({
       cacheName: 'third-party-scripts',
       plugins: [
         new workbox.cacheableResponse.CacheableResponsePlugin({
           statuses: [0, 200]
         }),
         new workbox.expiration.ExpirationPlugin({
-          maxEntries: 50,
+          maxEntries: 100, // Increased to handle more dependencies
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
         }),
       ]
     })
