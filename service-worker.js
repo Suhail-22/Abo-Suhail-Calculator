@@ -55,28 +55,36 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Use a network-first, cache-fallback strategy.
-  // This is good for keeping the app up-to-date, while providing robust offline support.
   event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        // If the network request is successful, cache it for future offline use.
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then(cache => {
-            // Only cache valid responses to avoid caching errors.
-            if (responseToCache && responseToCache.status === 200) {
+    caches.match(event.request)
+      .then(cachedResponse => {
+        // Return the cached response if it exists.
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        // If not in cache, fetch from the network.
+        return fetch(event.request).then(
+          networkResponse => {
+            // A response is a stream and can only be consumed once.
+            // We need to clone it to put one copy in the cache and return the other to the browser.
+            const responseToCache = networkResponse.clone();
+            
+            caches.open(CACHE_NAME).then(cache => {
+              // We only want to cache successful GET requests. Opaque responses are also fine.
+              if (event.request.method === 'GET') {
                  cache.put(event.request, responseToCache);
-            }
-        });
-        return networkResponse;
-      })
-      .catch(() => {
-        // If the network request fails (user is offline), try to serve the response from the cache.
-        return caches.match(event.request).then(cachedResponse => {
-            // If we have a cached response, return it.
-            // Otherwise, for navigation requests, return the cached index.html as a fallback for the SPA.
-            // For all other requests, the promise will resolve to 'undefined' and the fetch will fail as expected.
-            return cachedResponse || (event.request.mode === 'navigate' ? caches.match('index.html') : undefined);
+              }
+            });
+            
+            return networkResponse;
+          }
+        ).catch(() => {
+          // If the network request fails and there is no cached response,
+          // for navigation requests, return the main index.html page. This is key for SPAs.
+          if (event.request.mode === 'navigate') {
+            return caches.match('index.html');
+          }
         });
       })
   );
