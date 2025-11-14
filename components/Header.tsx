@@ -41,11 +41,11 @@ const Header: React.FC<HeaderProps> = ({ taxSettings, onToggleSettings, onShare,
     <div className="flex justify-between items-center p-3 rounded-3xl mb-4 bg-[var(--bg-header)] border border-[var(--border-primary)] backdrop-blur-sm">
       <HeaderButton onClick={onShare} aria-label="مشاركة النتيجة"><Icon name='share' /></HeaderButton>
       
-      <div className="flex items-center gap-2">
-        <div className={`text-sm py-1 px-2.5 rounded-xl bg-[var(--bg-inset)] text-[var(--text-secondary)] whitespace-nowrap transition-opacity duration-300 ${isEnabled ? 'opacity-100' : 'opacity-60'}`}>
+      <div className="flex items-center gap-2 flex-shrink min-w-0">
+        <div className={`text-sm py-1 px-2.5 rounded-xl bg-[var(--bg-inset)] text-[var(--text-secondary)] whitespace-nowrap transition-opacity duration-300 truncate ${isEnabled ? 'opacity-100' : 'opacity-60'}`}>
           الضريبة: <span className="font-bold text-[var(--text-primary)]">{getTaxRateLabel()}</span>
         </div>
-         <div className="text-sm py-1 px-2.5 rounded-xl bg-[var(--bg-inset)] text-[var(--text-secondary)] whitespace-nowrap">
+         <div className="text-sm py-1 px-2.5 rounded-xl bg-[var(--bg-inset)] text-[var(--text-secondary)] whitespace-nowrap truncate">
           الإدخالات: <span className="font-bold text-[var(--text-primary)]">{entryCountDisplay}</span>
         </div>
       </div>

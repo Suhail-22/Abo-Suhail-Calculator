@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-calculator-v10';
+const CACHE_NAME = 'ai-calculator-v11';
 const URLS_TO_CACHE = [
   '/',
   'index.html',
@@ -46,40 +46,38 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Handle navigation requests with a network-first strategy.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // If the network request fails, serve the main app shell from the cache.
+          return caches.match('/');
+        })
+    );
+    return;
+  }
+
+  // Handle asset requests with a cache-first strategy.
   event.respondWith(
     caches.match(event.request)
       .then(response => {
+        // If the asset is in the cache, return it.
         if (response) {
-          return response; // Cache hit - return response
+          return response;
         }
 
-        return fetch(event.request).then(
-          (networkResponse) => {
-            // Check if we received a valid response
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
-              return networkResponse;
-            }
-
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
+        // If the asset is not in the cache, fetch it from the network.
+        return fetch(event.request).then(networkResponse => {
+          // Check if we received a valid response before caching
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
             const responseToCache = networkResponse.clone();
-
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
               });
-
-            return networkResponse;
           }
-        ).catch(err => {
-            // Network request failed, try to serve from cache if possible.
-            // For navigation requests, fall back to the root page.
-            if (event.request.mode === 'navigate') {
-              console.warn(`Fetch failed for navigation request: ${event.request.url}; returning cached app shell.`, err);
-              return caches.match('/');
-            }
+          return networkResponse;
         });
       })
   );
