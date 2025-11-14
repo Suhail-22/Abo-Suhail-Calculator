@@ -68,22 +68,10 @@ if (workbox) {
     })
   );
 
-  // Fallback to offline.html for navigation requests
-  const offlineFallback = 'offline.html';
-  const networkOnly = new workbox.strategies.NetworkOnly();
-  const navigationHandler = async (params) => {
-    try {
-      return await networkOnly.handle(params);
-    } catch (error) {
-      return await caches.match(offlineFallback, {
-        ignoreSearch: true,
-      });
-    }
-  };
-
-  workbox.routing.registerRoute(
-      new workbox.routing.NavigationRoute(navigationHandler)
-  );
+  // By removing the explicit NavigationRoute that forced a 'NetworkOnly' strategy,
+  // we allow Workbox's precaching to handle the app shell. This serves the
+  // cached index.html when offline, which is the correct behavior for an
+  // offline-first PWA.
 
 } else {
   console.log(`Workbox didn't load`);
