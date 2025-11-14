@@ -24,12 +24,12 @@ const getAudioContext = () => {
 export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
   const [input, setInput] = useState('0');
   const [history, setHistory] = useLocalStorage<HistoryItem[]>('calcHistory_v2', []);
-  const [lastAnswer, setLastAnswer] = useLocalStorage<string>('calcLastAnswer', '0');
   const [vibrationEnabled, setVibrationEnabled] = useLocalStorage<boolean>('calcVibration', true);
   const [soundEnabled, setSoundEnabled] = useLocalStorage<boolean>('calcSoundEnabled', false);
   const [taxSettings, setTaxSettings] = useLocalStorage<TaxSettings>('calcTaxSettings_v2', { isEnabled: false, mode: 'add-15', rate: 15, showTaxPerNumber: false });
   const [maxHistory, setMaxHistory] = useLocalStorage<number>('calcMaxHistory', 50);
-  const [buttonLayout] = useLocalStorage('calcButtonLayout_v10', defaultButtonLayout);
+  const [buttonLayout] = useLocalStorage('calcButtonLayout_v11', defaultButtonLayout);
+  const [lastAnswer, setLastAnswer] = useLocalStorage<string>('calcLastAnswer', '0');
   const [calculationExecuted, setCalculationExecuted] = useState(false);
   const [error, setError] = useState<ErrorState | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
@@ -180,6 +180,15 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     });
   }, [calculationExecuted, input, vibrationEnabled, playSound, error]);
 
+  const appendAnswer = useCallback(() => {
+    playSound('function');
+    vibrate(20);
+    if (lastAnswer !== '0') {
+      append(lastAnswer);
+    }
+  }, [lastAnswer, append, playSound, vibrate]);
+
+
    const toggleSign = useCallback(() => {
     playSound('function');
     vibrate(30);
@@ -221,27 +230,6 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     });
   }, [calculationExecuted, vibrationEnabled, playSound]);
 
-   const appendAnswer = useCallback(() => {
-    playSound('function');
-    vibrate(20);
-    setError(null);
-    setAiSuggestion(null);
-    setLastExpression(null);
-    if (calculationExecuted) {
-        setInput(lastAnswer);
-        setCalculationExecuted(false);
-        return;
-    }
-    setInput(prev => {
-        if (prev === '0') return lastAnswer;
-        const lastChar = prev.slice(-1);
-         if (!isNaN(parseInt(lastChar, 10)) || lastChar === ')') {
-            return prev + '×' + lastAnswer;
-        }
-        return prev + lastAnswer;
-    });
-  }, [lastAnswer, calculationExecuted, vibrationEnabled, playSound]);
-
   const calculate = useCallback(async () => {
     if (calculationExecuted) {
       return;
@@ -262,7 +250,6 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         throw new Error('تعبير غير صالح رياضيًا.');
       }
       const resultStr = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
-      setLastAnswer(resultStr);
       
       let taxResultValue: number | null = null;
       let effectiveTaxRate = taxSettings.rate || 0;
@@ -302,6 +289,7 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         notes: ''
       };
       setHistory(prev => [newItem, ...prev].slice(0, maxHistory));
+      setLastAnswer(resultStr);
       setInput(resultStr);
       setCalculationExecuted(true);
       setLastExpression(expression);
@@ -322,7 +310,7 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
             setAiSuggestion(null);
         }
     }
-  }, [input, taxSettings, setHistory, vibrationEnabled, maxHistory, setLastAnswer, calculationExecuted, playSound]);
+  }, [input, taxSettings, setHistory, setLastAnswer, vibrationEnabled, maxHistory, calculationExecuted, playSound]);
   
   const applyAiFix = useCallback(() => {
     if (aiSuggestion?.fix) {
@@ -370,8 +358,8 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
   }, [setHistory]);
   
   const actions = useMemo(() => ({
-    append, clearAll, backspace, calculate, toggleSign, handleParenthesis, appendAnswer, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote
-  }), [append, clearAll, backspace, calculate, toggleSign, handleParenthesis, appendAnswer, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote]);
+    append, clearAll, backspace, calculate, toggleSign, handleParenthesis, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote, appendAnswer
+  }), [append, clearAll, backspace, calculate, toggleSign, handleParenthesis, applyAiFix, clearHistory, deleteHistoryItem, loadFromHistory, updateInput, updateHistoryItemNote, appendAnswer]);
 
   return {
     input, history, error, aiSuggestion, isCalculationExecuted: calculationExecuted, entryCount, lastExpression,

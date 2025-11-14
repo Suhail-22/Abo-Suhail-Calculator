@@ -75,9 +75,9 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
   }, [history, searchTerm]);
 
   return (
-    <div className={`fixed top-0 bottom-0 left-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto border-r-2 border-[var(--border-primary)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
+    <div className={`absolute top-0 bottom-0 left-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto border-r-2 border-[var(--border-primary)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-[var(--accent-color)] text-2xl font-bold">{`📜 السجل (${history.length})`}</h3>
+        <h3 className="text-[var(--accent-color)] text-2xl font-bold">{`السجل (${history.length})`} 📜</h3>
         <button onClick={onClose} className="text-2xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">✕</button>
       </div>
       <div className="mb-4">
@@ -97,28 +97,28 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
           groupedAndFilteredHistory.map(({ date, items, total }, groupIndex) => (
             <div key={date}>
               <div className={`flex justify-between items-center py-2 ${groupIndex > 0 ? 'mt-3 border-t border-[var(--border-secondary)]' : ''}`}>
-                <h4 className="text-sm font-bold text-[var(--text-secondary)]">{date}</h4>
                 <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-bold text-green-400">
+                    <span className="text-base font-bold text-green-400">
                         الإجمالي: {total.toLocaleString('en-US', { maximumFractionDigits: 2, useGrouping: false })}
                     </span>
                     <span className="text-xs text-[var(--text-secondary)]">
                         ({items.length} عمليات)
                     </span>
                 </div>
+                <h4 className="text-sm font-bold text-[var(--text-secondary)]">{date}</h4>
               </div>
               <div className="flex flex-col gap-2">
                 {items.map((item) => {
                   const isEditing = editingItem && editingItem.id === item.id;
                   return (
-                    <div key={item.id} className="p-4 bg-[var(--bg-inset-light)] rounded-xl transition-all duration-200">
-                      <div onClick={() => !isEditing && onHistoryItemClick(item)} className="cursor-pointer">
-                          <div className="text-base opacity-80 direction-ltr text-left break-all text-[var(--text-secondary)]">{item.expression} =</div>
-                          <div className="text-2xl font-bold direction-ltr text-left break-all">{item.result}</div>
+                    <div key={item.id} className="p-3 bg-[var(--bg-inset-light)] rounded-xl transition-all duration-200">
+                      <div onClick={() => !isEditing && onHistoryItemClick(item)} className="cursor-pointer space-y-1">
+                          <div className="text-sm opacity-80 direction-ltr text-left break-all text-[var(--text-secondary)]">= {item.expression}</div>
+                          <div className="text-4xl font-bold direction-ltr text-left break-all text-[var(--text-primary)]">{item.result}</div>
                           {item.taxResult && (
-                              <div className="text-cyan-400 text-base mt-2">{`${item.taxLabel || 'الإجمالي مع الضريبة'}: ${item.taxResult}`}</div>
+                              <div className="text-cyan-400 text-base">{`${item.taxLabel || 'الإجمالي مع الضريبة'}: ${item.taxResult}`}</div>
                           )}
-                          <div className="text-[var(--text-secondary)] opacity-70 text-xs mt-1">{item.date} - {item.time}</div>
+                          <div className="text-[var(--text-secondary)] opacity-70 text-xs pt-1">{item.date} - {item.time}</div>
                       </div>
                       {isEditing ? (
                           <div className="mt-3 animate-fade-in-down">
@@ -136,7 +136,15 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
                           </div>
                       ) : (
                         <div className="mt-2 flex justify-between items-center gap-2">
-                            <button onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })} className="text-xs text-[var(--accent-color)] hover:underline whitespace-nowrap">{item.notes ? "تعديل ملاحظة" : "إضافة ملاحظة"}</button>
+                             <button
+                                onClick={() => onDeleteItem(item)}
+                                aria-label={`حذف ${item.expression}`}
+                                className="text-red-500/70 hover:text-red-500 transition-colors p-1"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
                             
                             {item.notes ? (
                                 <p className="text-sm text-[var(--text-secondary)] italic px-2 break-all text-center flex-grow">{`"${item.notes}"`}</p>
@@ -144,11 +152,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
                                 <div className="flex-grow"></div>
                             )}
 
-                            <button
-                                onClick={() => onDeleteItem(item)}
-                                aria-label={`حذف ${item.expression}`}
-                                className="text-lg text-red-500/70 hover:text-red-500 transition-colors"
-                            >🗑️</button>
+                            <button onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })} className="text-sm text-[var(--accent-color)] hover:underline whitespace-nowrap">{item.notes ? "تعديل ملاحظة" : "إضافة ملاحظة"}</button>
                         </div>
                       )}
                     </div>

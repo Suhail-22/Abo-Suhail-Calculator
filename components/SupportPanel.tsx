@@ -13,7 +13,7 @@ const sendSupportMessage = () => {
 
 const SupportPanel: React.FC<SupportPanelProps> = ({ isOpen, onClose }) => {
   return (
-    <div className={`fixed top-0 bottom-0 left-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto transition-transform duration-300 ease-in-out border-r-2 border-[var(--border-primary)] transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div className={`absolute top-0 bottom-0 left-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto transition-transform duration-300 ease-in-out border-r-2 border-[var(--border-primary)] transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-[var(--accent-color)] text-2xl font-bold">💬 دعم Abo Suhail Calculator</h2>
         <button onClick={onClose} className="text-2xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">✕</button>

@@ -1,4 +1,5 @@
 
+
 export interface HistoryItem {
   id: number;
   expression: string;
@@ -41,4 +42,5 @@ export interface ButtonConfig {
   type: 'operator' | 'function' | 'number' | 'equals';
   icon?: string;
   span?: number;
+  rowSpan?: number;
 }

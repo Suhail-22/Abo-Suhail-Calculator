@@ -470,6 +470,7 @@ video {
 .z-\[100\]{z-index: 100}
 .z-\[60\]{z-index: 60}
 .col-span-2{grid-column: span 2 / span 2}
+.row-span-2{grid-row: span 2 / span 2}
 .m-0{margin: 0px}
 .mx-px{margin-left: 1px;margin-right: 1px}
 .my-4{margin-top: 1rem;margin-bottom: 1rem}
@@ -674,6 +675,7 @@ video {
 .list-disc{list-style-type: disc}
 .list-inside{list-style-position: inside}
 .space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse: 0;margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom: calc(0.5rem * var(--tw-space-y-reverse))}
+.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse: 0;margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom: calc(0.75rem * var(--tw-space-y-reverse))}
 .direction-ltr{direction: ltr}
 .cursor-pointer{cursor: pointer}
 .cursor-not-allowed{cursor: not-allowed}

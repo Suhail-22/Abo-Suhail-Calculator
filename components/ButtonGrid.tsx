@@ -44,8 +44,15 @@ const ButtonGrid: React.FC<ButtonGridProps> = ({ onAppend, onClear, onBackspace,
             style.color = 'var(--accent-equals-text)';
             className += ' animate-pulse-special';
         }
-        if (btn.span === 2) className += ' col-span-2';
-
+        if (btn.span) {
+            if (btn.span === 2) className += ' col-span-2';
+            if (btn.span === 3) className += ' col-span-3';
+            if (btn.span === 4) className += ' col-span-4';
+        }
+        if (btn.rowSpan) {
+            if (btn.rowSpan === 2) className += ' row-span-2';
+        }
+        
         return (
           <Button
             key={btn.id}
