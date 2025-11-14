@@ -139,9 +139,32 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     }
 
     setInput(prev => {
-      // Rule: Prevent starting with most operators.
+      const operators = ['+', '-', '×', '÷'];
+      const lastChar = prev.slice(-1);
+      
+      const lastOperatorIndex = Math.max(prev.lastIndexOf('+'), prev.lastIndexOf('-'), prev.lastIndexOf('×'), prev.lastIndexOf('÷'), prev.lastIndexOf('('));
+      const currentNumber = lastOperatorIndex === -1 ? prev : prev.substring(lastOperatorIndex + 1);
+
+      // Rule: Handle Zeros.
+      if (['0', '00', '000'].includes(value)) {
+        // If current number is '0', do nothing.
+        if (currentNumber === '0') {
+            return prev;
+        }
+        // If at start of input ('0'), do nothing.
+        if (prev === '0') {
+            return '0';
+        }
+        // If after operator, only add one '0'.
+        if ([...operators, '('].includes(lastChar)) {
+            return prev + '0';
+        }
+        // Fall through to append zeros to an existing number (e.g. '5' + '00' -> '500')
+      }
+      
+      // Rule: Replace leading '0' with new number, or start new calculation.
       if (prev === '0') {
-        const forbiddenStarters = ['+', '-', '×', '÷', '%', ')'];
+        const forbiddenStarters = [...operators, '%', ')'];
         if (forbiddenStarters.includes(value)) {
             return prev;
         }
@@ -150,8 +173,11 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
         return value; // Replace "0" with number
       }
       
-      const lastChar = prev.slice(-1);
-      const operators = ['+', '-', '×', '÷'];
+      // Rule: Replace '0' after an operator with new number.
+      if (currentNumber === '0' && !operators.includes(value) && value !== '.') {
+        return prev.slice(0, -1) + value;
+      }
+      
       const highPrecedenceOperators = ['×', '÷'];
 
       // Rule: Prevent operators right after an open parenthesis.
