@@ -53,7 +53,7 @@ const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, o
   };
 
   return (
-    <div className="relative max-w-md w-full z-10 animate-container-in">
+    <div id="calculator-container" className="relative max-w-md w-full z-10 animate-container-in">
       <div 
           className="bg-[var(--bg-calculator)] rounded-[28px] p-4 w-full relative backdrop-blur-xl z-10 border border-[var(--border-primary)]"
           style={{ boxShadow: 'var(--calculator-shadow, none)' }}
@@ -66,26 +66,32 @@ const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, o
           historyCount={calculator.history.length}
           entryCountDisplay={entryCount}
         />
-        <Display
-          input={input}
-          taxSettings={taxSettings}
-          error={error}
-          aiSuggestion={aiSuggestion}
-          onApplyAiFix={actions.applyAiFix}
-          isCalculationExecuted={calculator.isCalculationExecuted}
-          lastExpression={lastExpression}
-          onUpdateInput={actions.updateInput}
-        />
-        <ButtonGrid
-          onAppend={actions.append}
-          onClear={actions.clearAll}
-          onBackspace={actions.backspace}
-          onCalculate={actions.calculate}
-          onToggleSign={actions.toggleSign}
-          onParenthesis={actions.handleParenthesis}
-          onAppendAnswer={actions.appendAnswer}
-          layout={calculator.settings.buttonLayout}
-        />
+        <div id="calculator-main-content">
+          <div id="calculator-display-wrapper">
+            <Display
+              input={input}
+              taxSettings={taxSettings}
+              error={error}
+              aiSuggestion={aiSuggestion}
+              onApplyAiFix={actions.applyAiFix}
+              isCalculationExecuted={calculator.isCalculationExecuted}
+              lastExpression={lastExpression}
+              onUpdateInput={actions.updateInput}
+            />
+          </div>
+          <div id="calculator-buttons-wrapper">
+            <ButtonGrid
+              onAppend={actions.append}
+              onClear={actions.clearAll}
+              onBackspace={actions.backspace}
+              onCalculate={actions.calculate}
+              onToggleSign={actions.toggleSign}
+              onParenthesis={actions.handleParenthesis}
+              onAppendAnswer={actions.appendAnswer}
+              layout={calculator.settings.buttonLayout}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

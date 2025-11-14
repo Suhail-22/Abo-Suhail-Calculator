@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-calculator-v9';
+const CACHE_NAME = 'ai-calculator-v10';
 const URLS_TO_CACHE = [
   '/',
   'index.html',
@@ -75,9 +75,11 @@ self.addEventListener('fetch', event => {
           }
         ).catch(err => {
             // Network request failed, try to serve from cache if possible.
-            console.warn(`Fetch failed for ${event.request.url}; returning offline page instead.`, err);
-            // You can return a generic offline page here if you have one cached.
-            // For this app, we'll just let the browser show its offline error.
+            // For navigation requests, fall back to the root page.
+            if (event.request.mode === 'navigate') {
+              console.warn(`Fetch failed for navigation request: ${event.request.url}; returning cached app shell.`, err);
+              return caches.match('/');
+            }
         });
       })
   );

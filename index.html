@@ -102,6 +102,30 @@
     .ai-suggestion-highlight { text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--accent-color); text-underline-offset: 4px; text-decoration-thickness: 2px; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    @media (orientation: landscape) and (max-height: 550px) {
+      #app-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      #calculator-container {
+        max-width: 95vw;
+        width: 95vw;
+      }
+      #calculator-main-content {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      #calculator-display-wrapper {
+        flex: 1 1 55%;
+        min-width: 0;
+      }
+      #calculator-buttons-wrapper {
+        flex: 1 1 45%;
+        min-width: 0;
+      }
+    }
   </style>
 
 <script type="importmap">

@@ -249,7 +249,7 @@ function App() {
 
   return (
     <div className="relative min-h-screen bg-cover bg-center bg-fixed" style={{ background: 'var(--bg-primary-gradient)' }}>
-      <div className={`flex justify-center items-center min-h-screen w-full font-sans relative pt-24 pb-8 md:pt-8`}>
+      <div id="app-container" className={`flex justify-center items-center min-h-screen w-full font-sans relative pt-24 pb-8 md:pt-8`}>
         {appUpdate.available && (
            <div className="absolute top-4 z-20 w-[calc(100%-2rem)] max-w-[420px] bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in-down">
              <div>
