@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { TaxSettings, ErrorState, AISuggestion } from '../types';
 import { parseExpression, preprocessExpression } from '../services/calculationEngine';
 
@@ -53,6 +53,30 @@ const renderPreviewWithTax = (text: string, settings: TaxSettings) => {
 const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggestion, onApplyAiFix, isCalculationExecuted, lastExpression, onUpdateInput }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const resultContainerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const container = resultContainerRef.current;
+    if (container) {
+        // 1. Reset font size to let the CSS class define the initial size.
+        container.style.fontSize = '';
+        
+        // 2. Get the width of the container and the scroll width of the text.
+        const containerWidth = container.clientWidth;
+        const textWidth = container.scrollWidth;
+
+        // 3. If text overflows, calculate and apply new font size.
+        if (textWidth > containerWidth) {
+            const currentFontSize = parseFloat(getComputedStyle(container).fontSize);
+            // Calculate the ratio and reduce font size.
+            // The 0.98 factor adds a small horizontal padding.
+            const newFontSize = Math.floor(currentFontSize * (containerWidth / textWidth) * 0.98);
+            
+            // Set a minimum font size to prevent text from becoming unreadable.
+            container.style.fontSize = `${Math.max(20, newFontSize)}px`; // min 20px
+        }
+    }
+  }, [input]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -156,8 +180,8 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
                 renderHighlightedExpression()
             )}
         </div>
-        <div key={liveResult} className="text-6xl mt-auto font-bold text-center direction-ltr overflow-x-auto whitespace-nowrap text-[var(--text-display)] scrollbar-hide leading-tight" style={{ textShadow: 'var(--display-text-shadow, none)' }}>
-          <span className="inline-block animate-pop-in">{liveResult}</span>
+        <div ref={resultContainerRef} className="text-6xl mt-auto font-bold text-center direction-ltr overflow-hidden whitespace-nowrap text-[var(--text-display)] leading-tight" style={{ textShadow: 'var(--display-text-shadow, none)' }}>
+          <span key={liveResult} className="inline-block animate-pop-in">{liveResult}</span>
         </div>
       </div>
       <div className="relative h-12"> 
