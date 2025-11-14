@@ -1,37 +1,23 @@
 
-const APP_CACHE_NAME = 'ai-calculator-app-v19';
-const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v19';
+
+const APP_CACHE_NAME = 'ai-calculator-app-v20';
+const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v20';
 const APP_SHELL_URLS = [
   '/',
   'index.html',
-  'index.tsx',
+  'index.tsx', // Main JS entry point
   'manifest.json',
-  'App.tsx',
-  'types.ts',
-  'constants.ts',
-  'components/AboutPanel.tsx',
-  'components/Button.tsx',
-  'components/ButtonGrid.tsx',
-  'components/Calculator.tsx',
-  'components/ConfirmationDialog.tsx',
-  'components/Display.tsx',
-  'components/Header.tsx',
-  'components/HistoryPanel.tsx',
-  'components/Icon.tsx',
-  'components/Notification.tsx',
-  'components/Overlay.tsx',
-  'components/SettingsPanel.tsx',
-  'components/SupportPanel.tsx',
-  'hooks/useCalculator.tsx',
-  'hooks/useLocalStorage.tsx',
-  'services/calculationEngine.ts',
-  'services/geminiService.ts',
-  'services/localErrorFixer.ts',
+  // App Assets
   'assets/icon.svg',
   'assets/icon-192.png',
   'assets/icon-512.png',
   'assets/screenshot-narrow.png',
   'assets/screenshot-wide.png',
+  // Critical 3rd party resources needed for the app shell to render
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
+  'https://esm.sh/react@18.3.1',
+  'https://esm.sh/react-dom@18.3.1/client',
 ];
 
 self.addEventListener('install', event => {
