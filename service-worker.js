@@ -1,12 +1,36 @@
 
 
-const APP_CACHE_NAME = 'ai-calculator-app-v20';
-const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v20';
+
+const APP_CACHE_NAME = 'ai-calculator-app-v21';
+const DYNAMIC_CACHE_NAME = 'ai-calculator-dynamic-v21';
 const APP_SHELL_URLS = [
-  '/',
+  '.',
   'index.html',
-  'index.tsx', // Main JS entry point
   'manifest.json',
+  // Local Source Code
+  'index.tsx',
+  'App.tsx',
+  'types.ts',
+  'constants.ts',
+  'hooks/useCalculator.tsx',
+  'hooks/useLocalStorage.tsx',
+  'services/calculationEngine.ts',
+  'services/geminiService.ts',
+  'services/localErrorFixer.ts',
+  'components/AboutPanel.tsx',
+  'components/Button.tsx',
+  'components/ButtonGrid.tsx',
+  'components/Calculator.tsx',
+  'components/ConfirmationDialog.tsx',
+  'components/Display.tsx',
+  'components/ErrorBoundary.tsx',
+  'components/Header.tsx',
+  'components/HistoryPanel.tsx',
+  'components/Icon.tsx',
+  'components/Notification.tsx',
+  'components/Overlay.tsx',
+  'components/SettingsPanel.tsx',
+  'components/SupportPanel.tsx',
   // App Assets
   'assets/icon.svg',
   'assets/icon-192.png',
@@ -88,7 +112,7 @@ self.addEventListener('fetch', event => {
         // If both cache and network fail, and it's a navigation request,
         // serve the offline fallback page from the app shell cache.
         if (event.request.mode === 'navigate') {
-          return caches.match('/');
+          return caches.match('.');
         }
       })
   );
