@@ -2,8 +2,8 @@
   "short_name": "Abo Suhail Calc",
   "name": "Abo Suhail Calculator",
   "description": "آلة حاسبة متقدمة وذكية لنظام أندرويد و ويندوز و ايفون، مع سجل عمليات، حسابات ضريبية، وتخصيص كامل.",
-  "id": ".",
-  "scope": ".",
+  "id": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "assets/icon-192.png",
@@ -30,7 +30,7 @@
       "purpose": "maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "display_override": [
     "window-controls-overlay"

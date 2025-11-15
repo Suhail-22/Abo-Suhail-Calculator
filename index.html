@@ -6,16 +6,23 @@
   <title>Abo Suhail Calculator</title>
   <meta name="theme-color" content="#FFFFFF"/>
   
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Preconnect to required origins for faster resource fetching -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://esm.sh">
+
+  <!-- Defer non-critical CSS (Google Fonts) to avoid render-blocking -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap"></noscript>
   
+  <!-- App manifest and icons -->
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon.svg">
   <link rel="manifest" href="manifest.json">
   
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap" rel="stylesheet">
-
+  <!-- Defer TailwindCSS script to prevent render-blocking -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  
   <style>
     :root {
       /* --- Light Theme --- */
@@ -147,12 +154,25 @@
   
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').then(registration => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, err => {
-          console.log('ServiceWorker registration failed: ', err);
+      // Forcefully unregister any old, potentially problematic service workers.
+      // This helps ensure that the latest version of the service worker is installed,
+      // which is crucial if the user is "stuck" on a cached, broken version.
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+          console.log('Old service worker unregistered.');
+        }
+      }).then(() => {
+        // Once old workers are cleared, register the new one after the page loads.
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js').then(registration => {
+            console.log('New ServiceWorker registration successful with scope: ', registration.scope);
+          }).catch(err => {
+            console.error('New ServiceWorker registration failed: ', err);
+          });
         });
+      }).catch(err => {
+          console.error('Error during service worker unregistration: ', err);
       });
     }
   </script>

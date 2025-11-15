@@ -48,13 +48,18 @@ export function getLocalFix(expression: string): { fix: string; message: string;
 
 export function findErrorDetails(expression: string, message: string): { pre: string; highlight: string; post: string; } | null {
     if (message.includes('تنسيق النسبة المئوية غير صالح')) {
-        const match = expression.match(/(?<![\d.])%/); // Find '%' not preceded by a digit or dot
-        if (match && typeof match.index === 'number') {
-            return {
-                pre: expression.substring(0, match.index),
-                highlight: '%',
-                post: expression.substring(match.index + 1)
-            };
+        // Replaced negative lookbehind regex with a compatible loop for wider browser support.
+        for (let i = 0; i < expression.length; i++) {
+            if (expression[i] === '%') {
+                const prevChar = expression[i - 1];
+                if (i === 0 || (prevChar && !/[\d.]/.test(prevChar))) {
+                    return {
+                        pre: expression.substring(0, i),
+                        highlight: '%',
+                        post: expression.substring(i + 1)
+                    };
+                }
+            }
         }
     }
     if (message.includes('أقواس غير متوازنة')) {
