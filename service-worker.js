@@ -6,7 +6,7 @@ if (workbox) {
   workbox.core.skipWaiting();
   workbox.core.clientsClaim();
 
-  // 1. PRECACHING: Cache the app shell and all static assets during installation.
+  // 1. PRECACHING: Cache the app shell and local static assets during installation.
   const filesToPrecache = [
       '/',
       'index.html',
@@ -40,16 +40,23 @@ if (workbox) {
       'services/calculationEngine.ts',
       'services/geminiService.ts',
       'services/localErrorFixer.ts',
-      'https://cdn.tailwindcss.com',
-      'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
-      'https://esm.sh/react@18.3.1',
-      'https://esm.sh/react-dom@18.3.1/client',
   ];
   
+  // Use revision: null for files that don't have a hash in their name.
+  // Workbox will still cache them but won't be able to do efficient updates without a revision.
+  // This is okay for this project structure.
   workbox.precaching.precacheAndRoute(filesToPrecache.map(url => ({ url, revision: null })));
 
   // 2. RUNTIME CACHING
   
+  // Google Fonts (stylesheets)
+  workbox.routing.registerRoute(
+    ({url}) => url.origin === 'https://fonts.googleapis.com',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'google-fonts-stylesheets',
+    })
+  );
+
   // Google Fonts (font files)
   workbox.routing.registerRoute(
     ({url}) => url.origin === 'https://fonts.gstatic.com',
@@ -59,6 +66,14 @@ if (workbox) {
         new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
         new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 60 * 60 * 24 * 365, maxEntries: 30 }),
       ],
+    })
+  );
+  
+  // Tailwind CSS from CDN
+  workbox.routing.registerRoute(
+    ({url}) => url.href === 'https://cdn.tailwindcss.com',
+    new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'tailwind-css',
     })
   );
 
