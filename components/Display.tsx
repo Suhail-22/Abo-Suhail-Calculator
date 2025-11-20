@@ -53,6 +53,8 @@ const renderPreviewWithTax = (text: string, settings: TaxSettings) => {
 
 const getFontSizeClass = (text: string) => {
   const len = text.length;
+  if (len > 45) return 'text-xs';
+  if (len > 35) return 'text-sm';
   if (len > 30) return 'text-lg';
   if (len > 25) return 'text-xl';
   if (len > 20) return 'text-2xl';

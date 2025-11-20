@@ -1,9 +1,10 @@
 
-const CACHE_NAME = 'abo-suhail-calc-v10-stable';
-const DATA_CACHE_NAME = 'data-cache-v1';
+const CACHE_NAME = 'abo-suhail-calc-v11-stable';
+const DATA_CACHE_NAME = 'data-cache-v2';
 
 // FILES TO CACHE IMMEDIATELY (Critical for "Install App" button to appear)
-// Only absolute essentials. NO CODE FILES (like index.tsx) here to avoid 404s.
+// Only absolute essentials. 
+// IMPORTANT: Do NOT cache index.tsx or other source files here as they may not exist in the production build.
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -40,8 +41,6 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event: Network First for HTML, Stale-While-Revalidate for others
 self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
-
   // 1. Navigation (HTML): Network First -> Cache Fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
@@ -60,10 +59,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. Assets & Code: Stale-While-Revalidate
-  // This ensures the app loads instantly from cache, then updates in background.
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
+        // Only cache valid responses (not 404s)
         if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, networkResponse.clone());
@@ -71,7 +70,7 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(err => {
-          // Network failed, suppress error if we have cache
+          // Network failed
       });
 
       return cachedResponse || fetchPromise;

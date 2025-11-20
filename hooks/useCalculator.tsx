@@ -156,7 +156,7 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       const highPrecedenceOperators = ['×', '÷'];
 
       // Explicit Rule: Prevent duplicate percentage signs
-      if (value === '%' && lastChar === '%') {
+      if (value === '%' && (lastChar === '%' || prev.endsWith('%'))) {
           return prev;
       }
 

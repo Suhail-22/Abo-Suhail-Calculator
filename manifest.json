@@ -1,10 +1,9 @@
-
 {
   "short_name": "Abo Suhail",
   "name": "Abo Suhail Calculator",
   "description": "آلة حاسبة متقدمة تعمل بدون إنترنت مع ذكاء اصطناعي وسجل شامل",
   "id": "abo-suhail-calc",
-  "start_url": ".",
+  "start_url": "./index.html",
   "scope": ".",
   "display": "standalone",
   "orientation": "any",
