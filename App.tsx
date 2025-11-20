@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCalculator } from './hooks/useCalculator';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import Calculator from './components/Calculator';
+import SettingsPanel from './components/SettingsPanel';
+import HistoryPanel from './components/HistoryPanel';
+import SupportPanel from './components/SupportPanel';
+import AboutPanel from './components/AboutPanel';
 import Overlay from './components/Overlay';
 import Notification from './components/Notification';
 import ConfirmationDialog from './components/ConfirmationDialog';
 import { HistoryItem } from './types';
-
-const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
-const HistoryPanel = lazy(() => import('./components/HistoryPanel'));
-const SupportPanel = lazy(() => import('./components/SupportPanel'));
-const AboutPanel = lazy(() => import('./components/AboutPanel'));
 
 type ConfirmationState = {
   isOpen: boolean;
@@ -28,6 +28,9 @@ function App() {
   const [notification, setNotification] = useState({ message: '', show: false });
   const [appUpdate, setAppUpdate] = useState<{ available: boolean; registration: ServiceWorkerRegistration | null }>({ available: false, registration: null });
   const [confirmation, setConfirmation] = useState<ConfirmationState>({ isOpen: false, onConfirm: () => {}, onCancel: () => {}, title: '', message: '' });
+  
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const [theme, setTheme] = useLocalStorage<string>('calcTheme_v3', 'system');
   const [fontFamily, setFontFamily] = useLocalStorage<string>('calcFontFamily_v2', 'Tajawal');
@@ -42,6 +45,25 @@ function App() {
   }, []);
   
   const calculator = useCalculator({ showNotification });
+
+  // Capture PWA Install Prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -144,7 +166,7 @@ function App() {
     });
   }, [calculator.history, calculator.actions.clearHistory, showNotification]);
   
-  const handleDeleteHistoryItem = useCallback((item: HistoryItem) => {
+  const handleDeleteHistoryItem = useCallback((item: any) => {
     setConfirmation({
         isOpen: true,
         title: 'حذف العملية',
@@ -161,23 +183,21 @@ function App() {
   }, [calculator.actions.deleteHistoryItem, showNotification]);
 
   const onCheckForUpdates = useCallback(() => {
-    appUpdate.registration?.update().then(() => {
-      // After update(), the state of installing/waiting might not be immediately available.
-      // The 'updatefound' event listener is the more reliable way to detect updates.
-      // For immediate feedback, we can check, but it might not catch the very latest state.
-      if (appUpdate.registration?.installing) {
-        showNotification("جاري البحث عن تحديثات...");
-      } else if (appUpdate.registration?.waiting) {
-        setAppUpdate(prev => ({ ...prev, available: true }));
-        showNotification("تم العثور على تحديث جديد!");
-      } else {
-        showNotification("أنت تستخدم أحدث إصدار.");
-      }
-    }).catch(() => {
-      showNotification("فشل التحقق من التحديثات. تحقق من اتصالك بالإنترنت.");
-    });
+    if (appUpdate.registration) {
+        appUpdate.registration.update().then(() => {
+            if (appUpdate.registration && (appUpdate.registration.installing || appUpdate.registration.waiting)) {
+                showNotification("تم العثور على تحديث! سيتم التثبيت في الخلفية.");
+                setAppUpdate({ available: true, registration: appUpdate.registration });
+            } else {
+                showNotification("أنت تستخدم أحدث إصدار.");
+            }
+        }).catch(() => {
+            showNotification("فشل التحقق من التحديثات. تحقق من اتصالك بالإنترنت.");
+        });
+    } else {
+        showNotification("خدمة التحديث غير متاحة.");
+    }
   }, [appUpdate.registration, showNotification]);
-
 
   const onUpdateAccepted = () => {
       if (appUpdate.registration && appUpdate.registration.waiting) {
@@ -223,7 +243,7 @@ function App() {
   }, []);
 
   const handleExport = useCallback((format: 'txt' | 'csv', startDate: string, endDate: string) => {
-      const filteredHistory = calculator.history; // Filtering logic can be added here if needed
+      const filteredHistory = calculator.history;
 
       if (filteredHistory.length === 0) {
           showNotification("لا يوجد سجل للتصدير.");
@@ -246,13 +266,52 @@ function App() {
       closeAllPanels();
   }, [calculator.history, closeAllPanels, showNotification, createExportContent]);
   
+  const handleShareHistoryText = useCallback(async (items: HistoryItem[]) => {
+    if (!items || items.length === 0) {
+        showNotification("لا يوجد عناصر للمشاركة.");
+        return;
+    }
+    const text = createExportContent(items, 'txt');
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'سجل العمليات الحسابية',
+                text: text
+            });
+        } catch (err) {
+             if ((err as any).name !== 'AbortError') {
+                 navigator.clipboard.writeText(text);
+                 showNotification("تم نسخ السجل للحافظة.");
+             }
+        }
+    } else {
+        navigator.clipboard.writeText(text);
+        showNotification("تم نسخ السجل للحافظة.");
+    }
+  }, [createExportContent, showNotification]);
+
   const anyPanelOpen = isSettingsOpen || isHistoryOpen || isSupportOpen || isAboutOpen;
 
+  const todayCount = useMemo(() => {
+      const now = new Date();
+      const dateString = now.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      return calculator.history.filter(item => item.date === dateString).length;
+  }, [calculator.history]);
+
+  // Logic for visual orientation lock
+  // If 'portrait' is selected, force max-width 460px even in landscape.
+  // If 'auto', allow full width (which triggers the Split View in Calculator.tsx)
+  const orientationStyle = calculator.settings.orientation === 'portrait' 
+    ? 'max-w-[460px] mx-auto border-x border-[var(--border-secondary)] shadow-2xl min-h-screen flex flex-col justify-center py-4' 
+    : 'w-full h-full';
+
+  const isAutoOrientation = calculator.settings.orientation === 'auto';
+
   return (
-    <div className="relative min-h-screen bg-cover bg-center bg-fixed" style={{ background: 'var(--bg-primary-gradient)' }}>
-      <div id="app-container" className={`flex justify-center items-center min-h-screen w-full font-sans relative pt-24 pb-8 md:pt-8`}>
+    <div className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center" style={{ background: 'var(--bg-primary-gradient)' }}>
+      <div className={`flex-grow flex flex-col font-sans relative transition-all duration-300 ${orientationStyle}`}>
         {appUpdate.available && (
-           <div className="absolute top-4 z-20 w-[calc(100%-2rem)] max-w-[420px] bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in-down">
+           <div className="absolute top-4 left-4 right-4 z-50 bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in-down">
              <div>
                <h4 className="font-bold">✨ تحديث جديد جاهز!</h4>
                <p className="text-sm opacity-90">اضغط للتثبيت وإعادة تشغيل الآلة الحاسبة.</p>
@@ -260,49 +319,56 @@ function App() {
              <button onClick={onUpdateAccepted} className="bg-white text-blue-600 font-bold py-1.5 px-3 rounded-lg text-sm hover:bg-gray-200 transition-colors">تثبيت</button>
            </div>
         )}
-        <Calculator
-          calculator={calculator}
-          onToggleSettings={() => setIsSettingsOpen(v => !v)}
-          onToggleHistory={() => setIsHistoryOpen(v => !v)}
-          onShare={showNotification}
-          entryCount={calculator.entryCount}
-        />
+        
+        <div className={calculator.settings.orientation === 'portrait' ? 'w-full px-4' : 'w-full h-full p-4'}>
+             <Calculator
+              calculator={calculator}
+              onToggleSettings={() => setIsSettingsOpen(v => !v)}
+              onToggleHistory={() => setIsHistoryOpen(v => !v)}
+              onShare={showNotification}
+              entryCount={calculator.entryCount}
+              todayCount={todayCount} 
+              isAutoOrientation={isAutoOrientation}
+            />
+        </div>
       </div>
+      
       <Overlay show={anyPanelOpen} onClick={closeAllPanels} />
-      <Suspense fallback={null}>
-        {isSettingsOpen && <SettingsPanel
-          isOpen={isSettingsOpen}
-          onClose={closeAllPanels}
-          settings={calculator.settings}
-          theme={theme}
-          onThemeChange={setTheme}
-          fontFamily={fontFamily} 
-          setFontFamily={setFontFamily}
-          fontScale={fontScale}
-          setFontScale={setFontScale}
-          buttonTextColor={buttonTextColor}
-          setButtonTextColor={setButtonTextColor}
-          onOpenSupport={() => { closeAllPanels(); setIsSupportOpen(true); }}
-          onShowAbout={() => { closeAllPanels(); setIsAboutOpen(true); }}
-          onCheckForUpdates={onCheckForUpdates}
-        />}
-        {isHistoryOpen && <HistoryPanel
-          isOpen={isHistoryOpen}
-          onClose={closeAllPanels}
-          history={calculator.history}
-          onClearHistory={handleClearHistory}
-          onHistoryItemClick={(item) => {
-            calculator.actions.loadFromHistory(item.expression);
-            closeAllPanels();
-          }}
-          onExportHistory={(start, end) => handleExport('txt', start, end)}
-          onExportCsvHistory={(start, end) => handleExport('csv', start, end)}
-          onUpdateHistoryItemNote={calculator.actions.updateHistoryItemNote}
-          onDeleteItem={handleDeleteHistoryItem}
-        />}
-        {isSupportOpen && <SupportPanel isOpen={isSupportOpen} onClose={closeAllPanels} />}
-        {isAboutOpen && <AboutPanel isOpen={isAboutOpen} onClose={closeAllPanels} />}
-      </Suspense>
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={closeAllPanels}
+        settings={calculator.settings}
+        theme={theme}
+        onThemeChange={setTheme}
+        fontFamily={fontFamily} 
+        setFontFamily={setFontFamily}
+        fontScale={fontScale}
+        setFontScale={setFontScale}
+        buttonTextColor={buttonTextColor}
+        setButtonTextColor={setButtonTextColor}
+        onOpenSupport={() => { closeAllPanels(); setIsSupportOpen(true); }}
+        onShowAbout={() => { closeAllPanels(); setIsAboutOpen(true); }}
+        onCheckForUpdates={onCheckForUpdates}
+        deferredPrompt={deferredPrompt}
+        onInstallApp={handleInstallClick}
+      />
+      <HistoryPanel
+        isOpen={isHistoryOpen}
+        onClose={closeAllPanels}
+        history={calculator.history}
+        onClearHistory={handleClearHistory}
+        onHistoryItemClick={(item) => {
+          calculator.actions.loadFromHistory(item.expression);
+          closeAllPanels();
+        }}
+        onExportHistory={(start, end) => handleExport('txt', start, end)}
+        onExportCsvHistory={(start, end) => handleExport('csv', start, end)}
+        onShareHistory={handleShareHistoryText}
+        onUpdateHistoryItemNote={calculator.actions.updateHistoryItemNote}
+        onDeleteItem={handleDeleteHistoryItem}
+      />
+      <SupportPanel isOpen={isSupportOpen} onClose={closeAllPanels} />
+      <AboutPanel isOpen={isAboutOpen} onClose={closeAllPanels} />
       <ConfirmationDialog
         isOpen={confirmation.isOpen}
         title={confirmation.title}

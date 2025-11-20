@@ -1,136 +1,103 @@
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
-if (workbox) {
-  console.log(`Workbox is loaded`);
+const CACHE_NAME = 'ai-calculator-v7';
+const URLS_TO_CACHE = [
+  '/',
+  'index.html',
+  'index.tsx',
+  'manifest.json',
+  'App.tsx',
+  'types.ts',
+  'constants.ts',
+  'assets/icon.svg',
+  'assets/icon-192.png',
+  'assets/icon-512.png',
+  'assets/screenshot-narrow.png',
+  'assets/screenshot-wide.png',
+  'components/AboutPanel.tsx',
+  'components/Button.tsx',
+  'components/ButtonGrid.tsx',
+  'components/Calculator.tsx',
+  'components/ConfirmationDialog.tsx',
+  'components/Display.tsx',
+  'components/Header.tsx',
+  'components/HistoryPanel.tsx',
+  'components/Icon.tsx',
+  'components/Notification.tsx',
+  'components/Overlay.tsx',
+  'components/SettingsPanel.tsx',
+  'components/SupportPanel.tsx',
+  'hooks/useCalculator.tsx',
+  'hooks/useLocalStorage.tsx',
+  'services/calculationEngine.ts',
+  'services/geminiService.ts',
+  'services/localErrorFixer.ts',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
+  'https://esm.sh/react@18.3.1',
+  'https://esm.sh/react-dom@18.3.1/client'
+];
 
-  workbox.core.skipWaiting();
-  workbox.core.clientsClaim();
-
-  // 1. PRECACHING: Cache the app shell and local static assets during installation.
-  const filesToPrecache = [
-      '/',
-      'index.html',
-      'manifest.json',
-      'offline.html',
-      'assets/icon.svg',
-      'assets/icon-192.png',
-      'assets/icon-512.png',
-      'assets/screenshot-narrow.png',
-      'assets/screenshot-wide.png',
-      'index.tsx',
-      'App.tsx',
-      'types.ts',
-      'constants.ts',
-      'components/AboutPanel.tsx',
-      'components/Button.tsx',
-      'components/ButtonGrid.tsx',
-      'components/Calculator.tsx',
-      'components/ConfirmationDialog.tsx',
-      'components/Display.tsx',
-      'components/ErrorBoundary.tsx',
-      'components/Header.tsx',
-      'components/HistoryPanel.tsx',
-      'components/Icon.tsx',
-      'components/Notification.tsx',
-      'components/Overlay.tsx',
-      'components/SettingsPanel.tsx',
-      'components/SupportPanel.tsx',
-      'hooks/useCalculator.tsx',
-      'hooks/useLocalStorage.tsx',
-      'services/calculationEngine.ts',
-      'services/geminiService.ts',
-      'services/localErrorFixer.ts',
-  ];
-  
-  // Use revision: null for files that don't have a hash in their name.
-  // Workbox will still cache them but won't be able to do efficient updates without a revision.
-  // This is okay for this project structure.
-  workbox.precaching.precacheAndRoute(filesToPrecache.map(url => ({ url, revision: null })));
-
-  // 2. RUNTIME CACHING
-  
-  // Google Fonts (stylesheets)
-  workbox.routing.registerRoute(
-    ({url}) => url.origin === 'https://fonts.googleapis.com',
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'google-fonts-stylesheets',
-    })
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(URLS_TO_CACHE);
+      })
   );
+});
 
-  // Google Fonts (font files)
-  workbox.routing.registerRoute(
-    ({url}) => url.origin === 'https://fonts.gstatic.com',
-    new workbox.strategies.CacheFirst({
-      cacheName: 'google-fonts-webfonts',
-      plugins: [
-        new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
-        new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 60 * 60 * 24 * 365, maxEntries: 30 }),
-      ],
-    })
-  );
-  
-  // Tailwind CSS from CDN
-  workbox.routing.registerRoute(
-    ({url}) => url.href === 'https://cdn.tailwindcss.com',
-    new workbox.strategies.StaleWhileRevalidate({
-        cacheName: 'tailwind-css',
-    })
-  );
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response; // Cache hit - return response
+        }
 
-  // esm.sh scripts
-  workbox.routing.registerRoute(
-    ({ url }) => url.origin === 'https://esm.sh',
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'third-party-scripts',
-      plugins: [
-        new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
-        new workbox.expiration.ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 }),
-      ]
-    })
-  );
+        return fetch(event.request).then(
+          (networkResponse) => {
+            // Check if we received a valid response
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
+              return networkResponse;
+            }
 
-  // 3. OFFLINE NAVIGATION FALLBACK
-  const networkFirstWithOfflineFallback = new workbox.strategies.NetworkFirst({
-      cacheName: 'pages-cache',
-      plugins: [ new workbox.expiration.ExpirationPlugin({ maxEntries: 50 }) ],
-  });
+            // IMPORTANT: Clone the response. A response is a stream
+            // and because we want the browser to consume the response
+            // as well as the cache consuming the response, we need
+            // to clone it so we have two streams.
+            const responseToCache = networkResponse.clone();
 
-  workbox.routing.registerRoute(
-      ({ request }) => request.mode === 'navigate',
-      async (args) => {
-          try {
-              // Try the network first to get the latest version.
-              return await networkFirstWithOfflineFallback.handle(args);
-          } catch (error) {
-              // If the network fails (offline), serve the main app shell from the precache.
-              console.log('Network failed for navigation, serving app shell from precache.');
-              const precache = await caches.open(workbox.core.cacheNames.precache);
-              const cachedResponse = await precache.match(workbox.precaching.getCacheKeyForURL('/'));
-              if (cachedResponse) {
-                  return cachedResponse;
-              }
-              // As a last resort, show the dedicated offline page.
-              return caches.match('offline.html');
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return networkResponse;
           }
-      }
+        );
+      })
   );
+});
 
-  // General catch handler as a final safety net.
-  workbox.routing.setCatchHandler(({ event }) => {
-    switch (event.request.destination) {
-      case 'document':
-        return caches.match('offline.html');
-      default:
-        return Response.error();
-    }
-  });
 
-} else {
-  console.log(`Workbox didn't load`);
-}
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
 
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });

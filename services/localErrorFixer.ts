@@ -1,3 +1,4 @@
+
 export function getLocalFix(expression: string): { fix: string; message: string; } {
     let fixedExpr = expression;
     
@@ -18,8 +19,8 @@ export function getLocalFix(expression: string): { fix: string; message: string;
     }
 
     // Rule 3: Fix misplaced percentage sign (e.g., ÷%2 -> ÷2, %5 -> 5)
+    // Fixed regex to avoid lookbehind for better browser compatibility
     const originalExprAfterNewRule = fixedExpr;
-    // This regex finds a % that is either at the start of the string, or not preceded by a number/dot, and removes it.
     fixedExpr = fixedExpr.replace(/(^|[^.\d])%(\d)/g, '$1$2');
     if (fixedExpr !== originalExprAfterNewRule) {
       return { fix: fixedExpr, message: 'تم إصلاح موضع علامة النسبة المئوية.' };
@@ -48,18 +49,20 @@ export function getLocalFix(expression: string): { fix: string; message: string;
 
 export function findErrorDetails(expression: string, message: string): { pre: string; highlight: string; post: string; } | null {
     if (message.includes('تنسيق النسبة المئوية غير صالح')) {
-        // Replaced negative lookbehind regex with a compatible loop for wider browser support.
-        for (let i = 0; i < expression.length; i++) {
-            if (expression[i] === '%') {
-                const prevChar = expression[i - 1];
-                if (i === 0 || (prevChar && !/[\d.]/.test(prevChar))) {
-                    return {
-                        pre: expression.substring(0, i),
-                        highlight: '%',
-                        post: expression.substring(i + 1)
-                    };
-                }
-            }
+        // Safe regex replacement for /(?<![\d.])%/
+        // Matches start of string followed by %, OR non-digit/non-dot followed by %
+        const match = expression.match(/(^|[^.\d])%/); 
+        if (match && typeof match.index === 'number') {
+            const matchStr = match[0];
+            // Calculate exact index of % within the match
+            const percentIndexInMatch = matchStr.indexOf('%');
+            const absoluteIndex = match.index + percentIndexInMatch;
+            
+            return {
+                pre: expression.substring(0, absoluteIndex),
+                highlight: '%',
+                post: expression.substring(absoluteIndex + 1)
+            };
         }
     }
     if (message.includes('أقواس غير متوازنة')) {

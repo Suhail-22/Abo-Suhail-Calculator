@@ -1,5 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
 import { HistoryItem } from '../types';
+import Icon from './Icon';
 
 interface HistoryPanelProps {
   isOpen: boolean;
@@ -9,11 +11,19 @@ interface HistoryPanelProps {
   onHistoryItemClick: (item: HistoryItem) => void;
   onExportHistory: (startDate: string, endDate: string) => void;
   onExportCsvHistory: (startDate: string, endDate: string) => void;
+  onShareHistory: (items: HistoryItem[]) => void;
   onUpdateHistoryItemNote: (id: number, note: string) => void;
   onDeleteItem: (item: HistoryItem) => void;
 }
 
-const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, onClearHistory, onHistoryItemClick, onExportHistory, onExportCsvHistory, onUpdateHistoryItemNote, onDeleteItem }) => {
+const formatDisplayNumber = (numStr: string) => {
+    if (!numStr) return '';
+    const num = parseFloat(numStr);
+    if (isNaN(num)) return numStr;
+    return num.toLocaleString('en-US', { maximumFractionDigits: 3, useGrouping: false });
+};
+
+const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, onClearHistory, onHistoryItemClick, onExportHistory, onExportCsvHistory, onShareHistory, onUpdateHistoryItemNote, onDeleteItem }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,9 +85,16 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
   }, [history, searchTerm]);
 
   return (
-    <div className={`absolute top-0 bottom-0 left-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto border-r-2 border-[var(--border-primary)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-[var(--accent-color)] text-2xl font-bold">{`السجل (${history.length})`} 📜</h3>
+    <div className={`fixed top-0 bottom-0 left-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto border-r-2 border-[var(--border-primary)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'}`}>
+      <div className="flex justify-between items-center mb-4 border-b border-[var(--border-secondary)] pb-4">
+        <div className="flex items-center gap-2">
+            <h3 className="text-[var(--accent-color)] text-2xl font-bold">{`📜 السجل (${history.length})`}</h3>
+            {history.length > 0 && (
+                <button onClick={() => onShareHistory(history)} className="p-1.5 rounded-full bg-[var(--bg-inset)] text-[var(--text-secondary)] hover:text-[var(--accent-color)] transition-colors" aria-label="مشاركة كامل السجل">
+                    <Icon name="share_small" className="w-5 h-5" />
+                </button>
+            )}
+        </div>
         <button onClick={onClose} className="text-2xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">✕</button>
       </div>
       <div className="mb-4">
@@ -95,33 +112,38 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
           </p>
         ) : (
           groupedAndFilteredHistory.map(({ date, items, total }, groupIndex) => (
-            <div key={date}>
-              <div className={`flex justify-between items-center py-2 ${groupIndex > 0 ? 'mt-3 border-t border-[var(--border-secondary)]' : ''}`}>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-base font-bold text-green-400">
-                        الإجمالي: {total.toLocaleString('en-US', { maximumFractionDigits: 2, useGrouping: false })}
-                    </span>
-                    <span className="text-xs text-[var(--text-secondary)]">
-                        ({items.length} عمليات)
-                    </span>
-                </div>
+            <div key={date} className="mb-2">
+              <div className={`flex justify-between items-center py-3 px-1 ${groupIndex > 0 ? 'border-t-2 border-[var(--border-secondary)]' : ''}`}>
                 <h4 className="text-sm font-bold text-[var(--text-secondary)]">{date}</h4>
+                <div className="flex items-center gap-3">
+                     <button onClick={() => onShareHistory(items)} className="text-[var(--text-secondary)] hover:text-[var(--accent-color)] transition-colors" aria-label={`مشاركة عمليات يوم ${date}`}>
+                        <Icon name="share_small" className="w-4 h-4" />
+                    </button>
+                    <div className="flex flex-col items-end leading-none">
+                        <span className="text-[10px] text-[var(--text-secondary)] mb-0.5">
+                             ({items.length} عمليات)
+                        </span>
+                        <span className="text-xs font-bold text-green-400">
+                            {total.toLocaleString('en-US', { maximumFractionDigits: 2, useGrouping: false })}
+                        </span>
+                    </div>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 pl-2 border-l-2 border-[var(--border-secondary)] border-opacity-30">
                 {items.map((item) => {
                   const isEditing = editingItem && editingItem.id === item.id;
                   return (
-                    <div key={item.id} className="p-3 bg-[var(--bg-inset-light)] rounded-xl transition-all duration-200">
-                      <div onClick={() => !isEditing && onHistoryItemClick(item)} className="cursor-pointer space-y-1">
-                          <div className="text-sm opacity-80 direction-ltr text-left break-all text-[var(--text-secondary)]">= {item.expression}</div>
-                          <div className="text-4xl font-bold direction-ltr text-left break-all text-[var(--text-primary)]">{item.result}</div>
+                    <div key={item.id} className="p-3 bg-[var(--bg-inset-light)] rounded-lg transition-all duration-200 hover:bg-[var(--bg-inset)]">
+                      <div onClick={() => !isEditing && onHistoryItemClick(item)} className="cursor-pointer">
+                          <div className="text-base opacity-80 direction-ltr text-left break-all text-[var(--text-secondary)] font-mono">{item.expression} =</div>
+                          <div className="text-xl font-bold direction-ltr text-left break-all text-[var(--text-primary)]">{item.result}</div>
                           {item.taxResult && (
-                              <div className="text-cyan-400 text-base">{`${item.taxLabel || 'الإجمالي مع الضريبة'}: ${item.taxResult}`}</div>
+                              <div className="text-cyan-400 text-sm mt-1">{`${item.taxLabel || 'الإجمالي مع الضريبة'}: ${formatDisplayNumber(item.taxResult)}`}</div>
                           )}
-                          <div className="text-[var(--text-secondary)] opacity-70 text-xs pt-1">{item.date} - {item.time}</div>
+                          <div className="text-[var(--text-secondary)] opacity-60 text-[10px] mt-1 text-right">{item.time}</div>
                       </div>
                       {isEditing ? (
-                          <div className="mt-3 animate-fade-in-down">
+                          <div className="mt-2 animate-fade-in-down">
                               <textarea
                                   value={editingItem.note}
                                   onChange={(e) => setEditingItem(prev => ({...prev!, note: e.target.value}))}
@@ -130,29 +152,25 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, history, o
                                   rows={2}
                               />
                               <div className="flex gap-2 mt-2">
-                                  <button onClick={handleEditSave} className="flex-1 py-1 text-sm rounded-lg bg-green-500/80 text-white">حفظ</button>
-                                  <button onClick={() => setEditingItem(null)} className="flex-1 py-1 text-sm rounded-lg bg-[var(--bg-inset)]">إلغاء</button>
+                                  <button onClick={handleEditSave} className="flex-1 py-1 text-xs rounded bg-green-600 text-white">حفظ</button>
+                                  <button onClick={() => setEditingItem(null)} className="flex-1 py-1 text-xs rounded bg-[var(--bg-inset)]">إلغاء</button>
                               </div>
                           </div>
                       ) : (
-                        <div className="mt-2 flex justify-between items-center gap-2">
-                             <button
-                                onClick={() => onDeleteItem(item)}
-                                aria-label={`حذف ${item.expression}`}
-                                className="text-red-500/70 hover:text-red-500 transition-colors p-1"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                            
-                            {item.notes ? (
-                                <p className="text-sm text-[var(--text-secondary)] italic px-2 break-all text-center flex-grow">{`"${item.notes}"`}</p>
+                        <div className="mt-1 flex justify-between items-center gap-2 border-t border-[var(--border-secondary)] border-opacity-20 pt-1">
+                             {item.notes ? (
+                                <p className="text-xs text-[var(--text-secondary)] italic break-all flex-grow" onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })}>
+                                    📝 {item.notes}
+                                </p>
                             ) : (
-                                <div className="flex-grow"></div>
+                                <button onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })} className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--accent-color)] opacity-50 hover:opacity-100">+ ملاحظة</button>
                             )}
 
-                            <button onClick={() => setEditingItem({ id: item.id, note: item.notes || '' })} className="text-sm text-[var(--accent-color)] hover:underline whitespace-nowrap">{item.notes ? "تعديل ملاحظة" : "إضافة ملاحظة"}</button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDeleteItem(item); }}
+                                aria-label={`حذف ${item.expression}`}
+                                className="text-sm text-red-500/50 hover:text-red-500 transition-colors px-2"
+                            >🗑️</button>
                         </div>
                       )}
                     </div>

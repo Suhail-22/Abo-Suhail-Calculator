@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { useCalculator } from '../hooks/useCalculator';
 import Header from './Header';
@@ -13,9 +12,11 @@ interface CalculatorProps {
   onToggleHistory: () => void;
   onShare: (message: string) => void;
   entryCount: number;
+  todayCount: number;
+  isAutoOrientation?: boolean;
 }
 
-const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, onToggleHistory, onShare, entryCount }) => {
+const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, onToggleHistory, onShare, entryCount, todayCount, isAutoOrientation = false }) => {
   const { taxSettings } = calculator.settings;
   const { input, error, aiSuggestion, actions, lastExpression } = calculator;
 
@@ -53,21 +54,22 @@ const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, o
   };
 
   return (
-    <div id="calculator-container" className="relative max-w-md w-full z-10 animate-container-in">
+    <div className={`relative w-full h-full z-10 animate-container-in mx-auto ${isAutoOrientation ? 'landscape:max-w-full landscape:h-[90vh]' : 'max-w-md'}`}>
       <div 
-          className="bg-[var(--bg-calculator)] rounded-[28px] p-4 w-full relative backdrop-blur-xl z-10 border border-[var(--border-primary)]"
+          className={`bg-[var(--bg-calculator)] rounded-[var(--button-radius)] p-4 w-full h-full relative backdrop-blur-xl z-10 border border-[var(--border-primary)] flex flex-col ${isAutoOrientation ? 'landscape:flex-row landscape:gap-6' : ''}`}
           style={{ boxShadow: 'var(--calculator-shadow, none)' }}
         >
-        <Header
-          taxSettings={taxSettings}
-          onToggleSettings={onToggleSettings}
-          onShare={handleShare}
-          onToggleHistory={onToggleHistory}
-          historyCount={calculator.history.length}
-          entryCountDisplay={entryCount}
-        />
-        <div id="calculator-main-content">
-          <div id="calculator-display-wrapper">
+        
+        {/* Left Section in Landscape: Header & Display */}
+        <div className={`flex flex-col ${isAutoOrientation ? 'landscape:w-1/2 landscape:justify-center' : 'w-full'}`}>
+            <Header
+              taxSettings={taxSettings}
+              onToggleSettings={onToggleSettings}
+              onShare={handleShare}
+              onToggleHistory={onToggleHistory}
+              historyCount={todayCount}
+              entryCountDisplay={entryCount}
+            />
             <Display
               input={input}
               taxSettings={taxSettings}
@@ -78,8 +80,10 @@ const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, o
               lastExpression={lastExpression}
               onUpdateInput={actions.updateInput}
             />
-          </div>
-          <div id="calculator-buttons-wrapper">
+        </div>
+
+        {/* Right Section in Landscape: Buttons */}
+        <div className={`flex-grow ${isAutoOrientation ? 'landscape:w-1/2 landscape:h-full landscape:overflow-y-auto landscape:pr-2' : 'w-full'}`}>
             <ButtonGrid
               onAppend={actions.append}
               onClear={actions.clearAll}
@@ -90,7 +94,6 @@ const Calculator: React.FC<CalculatorProps> = ({ calculator, onToggleSettings, o
               onAppendAnswer={actions.appendAnswer}
               layout={calculator.settings.buttonLayout}
             />
-          </div>
         </div>
       </div>
     </div>

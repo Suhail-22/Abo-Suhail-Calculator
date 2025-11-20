@@ -288,8 +288,7 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
           }
       }
 
-      // Round to 3 decimal places max for cleaner history
-      const taxResult = taxResultValue ? taxResultValue.toLocaleString('en-US', {maximumFractionDigits: 3, useGrouping: false}) : null;
+      const taxResult = taxResultValue ? taxResultValue.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false}) : null;
       const taxLabel = taxSettings.mode === 'extract-custom' ? 'الأصل بدون ضريبة' : 'الإجمالي مع الضريبة';
       const now = new Date();
       

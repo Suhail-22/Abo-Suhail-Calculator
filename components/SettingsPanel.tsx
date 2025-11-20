@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { TaxSettings } from '../types';
+import Icon from './Icon';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -13,6 +15,8 @@ interface SettingsPanelProps {
     setTaxSettings: React.Dispatch<React.SetStateAction<TaxSettings>>;
     maxHistory: number;
     setMaxHistory: (value: number) => void;
+    orientation: 'auto' | 'portrait';
+    setOrientation: (value: 'auto' | 'portrait') => void;
   };
   theme: string;
   onThemeChange: (theme: 'light' | 'dark' | 'system') => void;
@@ -25,6 +29,8 @@ interface SettingsPanelProps {
   onOpenSupport: () => void;
   onShowAbout: () => void;
   onCheckForUpdates: () => void;
+  deferredPrompt?: any;
+  onInstallApp?: () => void;
 }
 
 const convertArabicNumerals = (str: string | number): string => {
@@ -34,8 +40,8 @@ const convertArabicNumerals = (str: string | number): string => {
         .replace(/[۰۱۲۳۴۵۶۷۸۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1776));
 };
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings, theme, onThemeChange, fontFamily, setFontFamily, fontScale, setFontScale, buttonTextColor, setButtonTextColor, onOpenSupport, onShowAbout, onCheckForUpdates }) => {
-  const { vibrationEnabled, setVibrationEnabled, soundEnabled, setSoundEnabled, taxSettings, setTaxSettings, maxHistory, setMaxHistory } = settings;
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings, theme, onThemeChange, fontFamily, setFontFamily, fontScale, setFontScale, buttonTextColor, setButtonTextColor, onOpenSupport, onShowAbout, onCheckForUpdates, deferredPrompt, onInstallApp }) => {
+  const { vibrationEnabled, setVibrationEnabled, soundEnabled, setSoundEnabled, taxSettings, setTaxSettings, maxHistory, setMaxHistory, orientation, setOrientation } = settings;
   
   const handleTaxChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -54,17 +60,38 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings
   };
 
   return (
-    <div className={`absolute top-0 bottom-0 right-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto border-l-2 border-[var(--border-primary)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+    <div className={`fixed top-0 bottom-0 right-0 w-[320px] max-w-[85vw] bg-[var(--bg-panel)] text-[var(--text-primary)] z-50 p-5 shadow-2xl overflow-y-auto border-l-2 border-[var(--border-primary)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-[var(--accent-color)] text-2xl font-bold">⚙️ الإعدادات</h3>
         <button onClick={onClose} className="text-2xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">✕</button>
       </div>
+      
+      {/* Install Button if PWA prompt is available */}
+      {deferredPrompt && onInstallApp && (
+         <div className="mb-6 animate-fade-in-down">
+             <button onClick={onInstallApp} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-bold shadow-lg hover:opacity-90 flex items-center justify-center gap-2">
+                 <span>📲</span> تثبيت التطبيق على جهازك
+             </button>
+         </div>
+      )}
+
       <div className="mb-6">
         <h4 className="text-lg font-semibold text-[var(--text-secondary)] mb-3">🎨 المظهر</h4>
         <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-[var(--bg-inset)]">
           <button onClick={() => onThemeChange('light')} className={`py-2 rounded-lg text-sm transition-all ${theme === 'light' ? 'bg-[var(--accent-color)] text-[var(--accent-color-contrast)] font-bold' : ''}`}>فاتح</button>
           <button onClick={() => onThemeChange('dark')} className={`py-2 rounded-lg text-sm transition-all ${theme === 'dark' ? 'bg-[var(--accent-color)] text-[var(--accent-color-contrast)] font-bold' : ''}`}>داكن</button>
           <button onClick={() => onThemeChange('system')} className={`py-2 rounded-lg text-sm transition-all ${theme === 'system' ? 'bg-[var(--accent-color)] text-[var(--accent-color-contrast)] font-bold' : ''}`}>حسب النظام</button>
+        </div>
+      </div>
+      <div className="mb-6">
+        <h4 className="text-lg font-semibold text-[var(--text-secondary)] mb-3">📱 اتجاه الشاشة</h4>
+        <div className="flex gap-2 p-1 rounded-xl bg-[var(--bg-inset)]">
+            <button onClick={() => setOrientation('auto')} className={`flex-1 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-all ${orientation === 'auto' ? 'bg-[var(--accent-color)] text-[var(--accent-color-contrast)] font-bold' : 'opacity-70'}`}>
+                 <Icon name="rotate" className="w-4 h-4" /> تلقائي
+            </button>
+            <button onClick={() => setOrientation('portrait')} className={`flex-1 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-all ${orientation === 'portrait' ? 'bg-[var(--accent-color)] text-[var(--accent-color-contrast)] font-bold' : 'opacity-70'}`}>
+                 <Icon name="lock_portrait" className="w-4 h-4" /> عمودي
+            </button>
         </div>
       </div>
       <div className="mb-6">
@@ -119,7 +146,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, settings
                     onChange={handleTaxRateChange} 
                     onBlur={() => setTaxSettings(prev => ({...prev, rate: parseFloat(String(prev.rate)) || 0 }))}
                     placeholder="%" 
-                    className="w-24 p-2.5 rounded-xl border border-[var(--border-secondary)] bg-[var(--bg-inset)] text-[var(--text-primary)] text-base text-center direction-ltr" 
+                    className="w-24 p-2.5 rounded-xl border border-[var(--border-secondary)] bg-[var(--bg-inset)] text-[var(--text-primary)] text-center direction-ltr" 
                 />
               </div>
             )}

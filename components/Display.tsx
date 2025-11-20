@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { TaxSettings, ErrorState, AISuggestion } from '../types';
 import { parseExpression, preprocessExpression } from '../services/calculationEngine';
 
@@ -53,30 +54,6 @@ const renderPreviewWithTax = (text: string, settings: TaxSettings) => {
 const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggestion, onApplyAiFix, isCalculationExecuted, lastExpression, onUpdateInput }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const resultContainerRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const container = resultContainerRef.current;
-    if (container) {
-        // 1. Reset font size to let the CSS class define the initial size.
-        container.style.fontSize = '';
-        
-        // 2. Get the width of the container and the scroll width of the text.
-        const containerWidth = container.clientWidth;
-        const textWidth = container.scrollWidth;
-
-        // 3. If text overflows, calculate and apply new font size.
-        if (textWidth > containerWidth) {
-            const currentFontSize = parseFloat(getComputedStyle(container).fontSize);
-            // Calculate the ratio and reduce font size.
-            // The 0.98 factor adds a small horizontal padding.
-            const newFontSize = Math.floor(currentFontSize * (containerWidth / textWidth) * 0.98);
-            
-            // Set a minimum font size to prevent text from becoming unreadable.
-            container.style.fontSize = `${Math.max(20, newFontSize)}px`; // min 20px
-        }
-    }
-  }, [input]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -100,41 +77,14 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   } else {
     try {
       const processedExpr = preprocessExpression(input);
+      // Replaced lookbehind `(?<=^|\()(\+)` with compatible version `(^|\()(\+)`
       const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
       const result = parseExpression(safeExpr);
       if (!isNaN(result) && isFinite(result)) {
         liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
-      } else {
-        throw new Error("Invalid number"); // Force into catch block to use robust preview logic
       }
     } catch (e) {
-      // For live preview, try to calculate a partial result to avoid showing "..."
-      let exprForPreview = input;
-      // If it ends with an operator, evaluate what's before it
-      if (/[+\-×÷]$/.test(exprForPreview.trim())) {
-        exprForPreview = exprForPreview.trim().slice(0, -1);
-      }
-
-      try {
-        if (!exprForPreview) {
-          liveResult = '0';
-        } else {
-          const processedExpr = preprocessExpression(exprForPreview);
-          const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
-          const result = parseExpression(safeExpr);
-          if (!isNaN(result) && isFinite(result)) {
-            liveResult = result.toLocaleString('en-US', {maximumFractionDigits: 10, useGrouping: false});
-          } else {
-            // As a last resort, show the last number entered
-            const numbers = input.match(/-?\d+(\.\d+)?/g);
-            liveResult = numbers ? numbers[numbers.length - 1] : '...';
-          }
-        }
-      } catch (e2) {
-        // As a last resort, show the last number entered
-        const numbers = input.match(/-?\d+(\.\d+)?/g);
-        liveResult = numbers ? numbers[numbers.length - 1] : '...';
-      }
+      liveResult = '...';
     }
   }
   
@@ -166,6 +116,7 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
       }
       const taxLabel = 'الضريبة';
       taxAmount = `${taxLabel}: ${taxValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
+      // Fixed: Removed duplicate label
       totalWithTax = `${secondaryLabel}: ${secondaryValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
   }
 
@@ -207,8 +158,8 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
                 renderHighlightedExpression()
             )}
         </div>
-        <div ref={resultContainerRef} className="text-6xl mt-auto font-bold text-center direction-ltr overflow-hidden whitespace-nowrap text-[var(--text-display)] leading-tight" style={{ textShadow: 'var(--display-text-shadow, none)' }}>
-          <span key={liveResult} className="inline-block animate-pop-in">{liveResult}</span>
+        <div key={liveResult} className="text-6xl mt-auto font-bold text-center direction-ltr overflow-x-auto whitespace-nowrap text-[var(--text-display)] scrollbar-hide leading-tight" style={{ textShadow: 'var(--display-text-shadow, none)' }}>
+          <span className="inline-block animate-pop-in">{liveResult}</span>
         </div>
       </div>
       <div className="relative h-12"> 
