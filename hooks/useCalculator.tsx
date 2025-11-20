@@ -157,6 +157,11 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       const operators = ['+', '-', '×', '÷'];
       const highPrecedenceOperators = ['×', '÷'];
 
+      // Rule: Prevent duplicate percentage signs
+      if (value === '%' && lastChar === '%') {
+          return prev;
+      }
+
       // Rule: Prevent operators right after an open parenthesis.
       if (lastChar === '(' && ['+', '×', '÷', '%', ')'].includes(value)) {
           return prev;

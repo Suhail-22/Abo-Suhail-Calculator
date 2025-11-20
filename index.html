@@ -1,14 +1,22 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Abo Suhail Calculator</title>
-  <meta name="theme-color" content="#FFFFFF"/>
+  
+  <!-- PWA & Mobile Capability -->
+  <meta name="theme-color" content="#0F172A"/>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Abo Suhail Calc">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/icon.svg">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="manifest" href="manifest.json">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,6 +103,7 @@
       background: var(--bg-primary-gradient);
       color: var(--text-primary);
       transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+      overscroll-behavior: none;
     }
 
     ::-webkit-scrollbar { width: 8px; }

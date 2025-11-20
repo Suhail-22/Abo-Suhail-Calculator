@@ -51,6 +51,15 @@ const renderPreviewWithTax = (text: string, settings: TaxSettings) => {
   );
 };
 
+const getFontSizeClass = (text: string) => {
+  const len = text.length;
+  if (len > 22) return 'text-2xl';
+  if (len > 16) return 'text-3xl';
+  if (len > 12) return 'text-4xl';
+  if (len > 9) return 'text-5xl';
+  return 'text-6xl';
+};
+
 const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggestion, onApplyAiFix, isCalculationExecuted, lastExpression, onUpdateInput }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -121,7 +130,8 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   }
 
   const displayBorderClass = error || aiSuggestion ? 'bg-gradient-to-r from-red-600 via-orange-500 to-red-600 shadow-[0_0_20px_rgba(255,61,0,0.7)]' : '';
-  
+  const resultFontSize = getFontSizeClass(liveResult);
+
   const renderHighlightedExpression = () => {
     let content;
     if (error?.details) {
@@ -158,7 +168,7 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
                 renderHighlightedExpression()
             )}
         </div>
-        <div key={liveResult} className="text-6xl mt-auto font-bold text-center direction-ltr overflow-x-auto whitespace-nowrap text-[var(--text-display)] scrollbar-hide leading-tight" style={{ textShadow: 'var(--display-text-shadow, none)' }}>
+        <div key={liveResult} className={`${resultFontSize} mt-auto font-bold text-center direction-ltr overflow-x-auto whitespace-nowrap text-[var(--text-display)] scrollbar-hide leading-tight transition-all duration-200`} style={{ textShadow: 'var(--display-text-shadow, none)' }}>
           <span className="inline-block animate-pop-in">{liveResult}</span>
         </div>
       </div>

@@ -1,103 +1,94 @@
 
-const CACHE_NAME = 'ai-calculator-v7';
-const URLS_TO_CACHE = [
-  '/',
-  'index.html',
-  'index.tsx',
-  'manifest.json',
-  'App.tsx',
-  'types.ts',
-  'constants.ts',
-  'assets/icon.svg',
-  'assets/icon-192.png',
-  'assets/icon-512.png',
-  'assets/screenshot-narrow.png',
-  'assets/screenshot-wide.png',
-  'components/AboutPanel.tsx',
-  'components/Button.tsx',
-  'components/ButtonGrid.tsx',
-  'components/Calculator.tsx',
-  'components/ConfirmationDialog.tsx',
-  'components/Display.tsx',
-  'components/Header.tsx',
-  'components/HistoryPanel.tsx',
-  'components/Icon.tsx',
-  'components/Notification.tsx',
-  'components/Overlay.tsx',
-  'components/SettingsPanel.tsx',
-  'components/SupportPanel.tsx',
-  'hooks/useCalculator.tsx',
-  'hooks/useLocalStorage.tsx',
-  'services/calculationEngine.ts',
-  'services/geminiService.ts',
-  'services/localErrorFixer.ts',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap',
-  'https://esm.sh/react@18.3.1',
-  'https://esm.sh/react-dom@18.3.1/client'
+const CACHE_NAME = 'abo-suhail-calc-v9-stable';
+const DATA_CACHE_NAME = 'data-cache-v1';
+
+// FILES TO CACHE IMMEDIATELY (Critical for "Install App" button to appear)
+// Only local files here. No external CDNs in this list to prevent install failures.
+const PRECACHE_URLS = [
+  './',
+  './index.html',
+  './index.tsx',
+  './manifest.json',
+  './assets/icon.svg'
 ];
 
-self.addEventListener('install', event => {
+// Install Event: Cache only the critical local shell
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(URLS_TO_CACHE);
+      .then((cache) => {
+        console.log('[Service Worker] Pre-caching local shell');
+        return cache.addAll(PRECACHE_URLS);
       })
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response; // Cache hit - return response
-        }
-
-        return fetch(event.request).then(
-          (networkResponse) => {
-            // Check if we received a valid response
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
-              return networkResponse;
-            }
-
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
-            const responseToCache = networkResponse.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return networkResponse;
-          }
-        );
-      })
-  );
-});
-
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+// Activate Event: Clean up old caches
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
+        if (key !== CACHE_NAME && key !== DATA_CACHE_NAME) {
+          console.log('[Service Worker] Removing old cache', key);
+          return caches.delete(key);
+        }
+      }));
     })
   );
+  self.clients.claim();
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+// Fetch Event: Complex strategy for robust offline support
+self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+
+  // 1. Handle Navigation Requests (HTML) -> Network First, Fallback to Cache
+  // This ensures users get the latest version if online, but app works offline.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        })
+        .catch(() => {
+          return caches.match('./index.html');
+        })
+    );
+    return;
   }
+
+  // 2. Handle External Libraries (CDNs like Tailwind, React) -> Stale While Revalidate
+  // This allows the app to load fast from cache, while updating in background.
+  if (requestUrl.origin !== location.origin) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          // Update cache with new version
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
+             caches.open(CACHE_NAME).then((cache) => {
+               cache.put(event.request, networkResponse.clone());
+             });
+          }
+          return networkResponse;
+        }).catch(err => {
+           // Network failed, but we might have it in cache.
+           // If not in cache and network fails, the resource is unavailable.
+        });
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // 3. Handle Local Assets -> Cache First
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });
