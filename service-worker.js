@@ -1,13 +1,12 @@
 
-const CACHE_NAME = 'abo-suhail-calc-v9-stable';
+const CACHE_NAME = 'abo-suhail-calc-v10-stable';
 const DATA_CACHE_NAME = 'data-cache-v1';
 
 // FILES TO CACHE IMMEDIATELY (Critical for "Install App" button to appear)
-// Only local files here. No external CDNs in this list to prevent install failures.
+// Only absolute essentials. NO CODE FILES (like index.tsx) here to avoid 404s.
 const PRECACHE_URLS = [
   './',
   './index.html',
-  './index.tsx',
   './manifest.json',
   './assets/icon.svg'
 ];
@@ -39,12 +38,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event: Complex strategy for robust offline support
+// Fetch Event: Network First for HTML, Stale-While-Revalidate for others
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
-  // 1. Handle Navigation Requests (HTML) -> Network First, Fallback to Cache
-  // This ensures users get the latest version if online, but app works offline.
+  // 1. Navigation (HTML): Network First -> Cache Fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -61,34 +59,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Handle External Libraries (CDNs like Tailwind, React) -> Stale While Revalidate
-  // This allows the app to load fast from cache, while updating in background.
-  if (requestUrl.origin !== location.origin) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          // Update cache with new version
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
-             caches.open(CACHE_NAME).then((cache) => {
-               cache.put(event.request, networkResponse.clone());
-             });
-          }
-          return networkResponse;
-        }).catch(err => {
-           // Network failed, but we might have it in cache.
-           // If not in cache and network fails, the resource is unavailable.
-        });
-
-        return cachedResponse || fetchPromise;
-      })
-    );
-    return;
-  }
-
-  // 3. Handle Local Assets -> Cache First
+  // 2. Assets & Code: Stale-While-Revalidate
+  // This ensures the app loads instantly from cache, then updates in background.
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type !== 'opaque') {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse.clone());
+            });
+        }
+        return networkResponse;
+      }).catch(err => {
+          // Network failed, suppress error if we have cache
+      });
+
+      return cachedResponse || fetchPromise;
     })
   );
 });

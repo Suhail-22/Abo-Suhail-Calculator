@@ -118,7 +118,6 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     }
     vibrate(20);
 
-    // If an error was present, start a fresh calculation.
     if (error) {
         setError(null);
         setAiSuggestion(null);
@@ -141,23 +140,22 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     }
 
     setInput(prev => {
-      // Rule: Prevent starting with most operators.
       if (prev === '0') {
         const forbiddenStarters = ['+', '-', '×', '÷', '%', ')'];
         if (forbiddenStarters.includes(value)) {
             return prev;
         }
         if (value === '.') return '0.';
-        if (value === '00' || value === '000') return '0'; // Prevent multiple 00s at start, keep as single 0
+        if (value === '00' || value === '000') return '0';
         if (value === '(') return '(';
-        return value; // Replace "0" with number
+        return value; 
       }
       
       const lastChar = prev.slice(-1);
       const operators = ['+', '-', '×', '÷'];
       const highPrecedenceOperators = ['×', '÷'];
 
-      // Rule: Prevent duplicate percentage signs
+      // Explicit Rule: Prevent duplicate percentage signs
       if (value === '%' && lastChar === '%') {
           return prev;
       }
@@ -176,11 +174,9 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       const isLastCharAnOperator = operators.includes(lastChar);
       
       if (isValueAnOperator && isLastCharAnOperator) {
-        // Allow a '-' to follow '×' or '÷' for negative numbers (e.g., 5×- or 10÷-)
         if (highPrecedenceOperators.includes(lastChar) && value === '-') {
           return prev + value;
         }
-        // Otherwise, replace the last operator with the new one (e.g., 5+- becomes 5-)
         return prev.slice(0, -1) + value;
       }
       
@@ -262,7 +258,6 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
     if (expression === '0') return;
     try {
       const processedExpr = preprocessExpression(expression);
-      // Replaced lookbehind `(?<=^|\()(\+)` with compatible version `(^|\()(\+)`
       const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
       let result = parseExpression(safeExpr);
 
@@ -293,7 +288,6 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
           }
       }
 
-      // Round to 3 decimal places max for cleaner history
       const taxResult = taxResultValue ? taxResultValue.toLocaleString('en-US', {maximumFractionDigits: 3, useGrouping: false}) : null;
       const taxLabel = taxSettings.mode === 'extract-custom' ? 'الأصل بدون ضريبة' : 'الإجمالي مع الضريبة';
       const now = new Date();
@@ -316,7 +310,6 @@ export const useCalculator = ({ showNotification }: UseCalculatorProps) => {
       setLastExpression(expression);
     } catch (e: any) {
         let errorMessage = e.message || 'خطأ غير معروف';
-        // Intercept the generic "Unknown symbol" error and provide a more specific one for percentages.
         if (errorMessage === 'رمز غير معروف' && expression.includes('%')) {
             errorMessage = 'تنسيق النسبة المئوية غير صالح.';
         }

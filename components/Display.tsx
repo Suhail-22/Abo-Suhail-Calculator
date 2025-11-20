@@ -53,7 +53,9 @@ const renderPreviewWithTax = (text: string, settings: TaxSettings) => {
 
 const getFontSizeClass = (text: string) => {
   const len = text.length;
-  if (len > 22) return 'text-2xl';
+  if (len > 30) return 'text-lg';
+  if (len > 25) return 'text-xl';
+  if (len > 20) return 'text-2xl';
   if (len > 16) return 'text-3xl';
   if (len > 12) return 'text-4xl';
   if (len > 9) return 'text-5xl';
@@ -86,7 +88,6 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   } else {
     try {
       const processedExpr = preprocessExpression(input);
-      // Replaced lookbehind `(?<=^|\()(\+)` with compatible version `(^|\()(\+)`
       const safeExpr = processedExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/(^|\()(\+)/g, '$1');
       const result = parseExpression(safeExpr);
       if (!isNaN(result) && isFinite(result)) {
@@ -125,7 +126,6 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
       }
       const taxLabel = 'الضريبة';
       taxAmount = `${taxLabel}: ${taxValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
-      // Fixed: Removed duplicate label
       totalWithTax = `${secondaryLabel}: ${secondaryValue.toLocaleString('en-US', {maximumFractionDigits: 2, useGrouping: false})}`;
   }
 
@@ -153,8 +153,8 @@ const Display: React.FC<DisplayProps> = ({ input, taxSettings, error, aiSuggesti
   return (
     <div className="relative p-4 bg-[var(--bg-display)] rounded-[25px] mb-4 border border-[var(--border-primary)] shadow-[inset_0_4px_10px_rgba(0,0,0,0.08)] min-h-[220px] flex flex-col justify-between">
       <div className={`absolute inset-0 -z-10 rounded-[22px] transition-all duration-300 ${displayBorderClass}`} />
-      <div className="px-1.5 flex flex-col justify-end flex-grow">
-        <div className="text-xl text-[var(--text-secondary)] mb-1 text-left direction-ltr break-all min-h-[30px]" onClick={() => !isCalculationExecuted && setIsEditing(true)}>
+      <div className="px-1.5 flex flex-col justify-end flex-grow overflow-hidden">
+        <div className="text-xl text-[var(--text-secondary)] mb-1 text-left direction-ltr break-all min-h-[30px] overflow-hidden" onClick={() => !isCalculationExecuted && setIsEditing(true)}>
             {isEditing ? (
                  <textarea
                     ref={textareaRef}
