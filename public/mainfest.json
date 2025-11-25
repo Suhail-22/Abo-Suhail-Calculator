@@ -1,0 +1,34 @@
+{
+  "short_name": "Abo Suhail Calc",
+  "name": "Abo Suhail Calculator",
+  "description": "آلة حاسبة متقدمة وذكية",
+  "id": "abosuhail-calculator",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "assets/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "theme_color": "#050A14",
+  "background_color": "#050A14",
+  "lang": "ar",
+  "prefer_related_applications": false
+}
