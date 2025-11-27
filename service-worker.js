@@ -1,77 +1,79 @@
-const CACHE_NAME = 'abo-suhail-offline-v13.0.0';
-const URLS_TO_CACHE = [
+// service-worker.js محسن
+const CACHE_NAME = 'abo-suhail-calculator-v2';
+const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
   '/assets/icon.svg',
-  '/offline.html'
+  '/manifest.json',
+  // سيتم إضافة الملفات الديناميكية أثناء التشغيل
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  console.log('🔄 Service Worker: Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(URLS_TO_CACHE).catch(err => console.log('Pre-cache warning:', err));
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('✅ Service Worker: Caching core files');
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('🎯 Service Worker: Activated');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
+            console.log('🗑️ Removing old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // 1. Navigation Strategy: Cache First (Root Fallback)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      (async () => {
-        try {
-          const cache = await caches.open(CACHE_NAME);
-          // 1. Try exact match
-          let cachedResponse = await cache.match(event.request);
-          if (cachedResponse) return cachedResponse;
-          // 2. Try root '/'
-          cachedResponse = await cache.match('/');
-          if (cachedResponse) return cachedResponse;
-          // 3. Try index.html
-          cachedResponse = await cache.match('/index.html');
-          if (cachedResponse) return cachedResponse;
-          // 4. Network
-          const networkResponse = await fetch(event.request);
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        } catch (error) {
-          const cache = await caches.open(CACHE_NAME);
-          return await cache.match('/offline.html');
-        }
-      })()
-    );
+  // استثناء طلبات التحليلات والخدمات الخارجية
+  if (event.request.url.includes('google-analytics') || 
+      event.request.url.includes('api.') ||
+      !event.request.url.startsWith('http')) {
     return;
   }
 
-  // 2. Assets Strategy: Stale-While-Revalidate
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-           const clone = networkResponse.clone();
-           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+    caches.match(event.request)
+      .then((response) => {
+        // إذا وجد في الكاش
+        if (response) {
+          return response;
         }
-        return networkResponse;
-      }).catch(() => {});
-      return cachedResponse || fetchPromise;
-    })
+
+        // إذا لم يوجد، جلب من الشبكة
+        return fetch(event.request)
+          .then((networkResponse) => {
+            // تخزين الردود الناجحة فقط
+            if (networkResponse && networkResponse.status === 200) {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                });
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            // للطلبات الديناميكية، أرجع صفحة الأساس
+            if (event.request.destination === 'document') {
+              return caches.match('/index.html');
+            }
+            return new Response('التطبيق يعمل بدون اتصال', {
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            });
+          });
+      })
   );
 });

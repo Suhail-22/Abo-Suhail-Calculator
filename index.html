@@ -3,19 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Abo Suhail Calculator</title>
+  <title>Abo Suhail Calculator - يعمل بدون اتصال</title>
   <meta name="theme-color" content="#050A14"/>
-  <meta name="description" content="Abo Suhail Calculator - Advanced PWA calculator.">
+  <meta name="description" content="Abo Suhail Calculator - Advanced PWA calculator with offline support.">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ASC Calculator">
+  <link rel="apple-touch-icon" href="/assets/icon.svg">
+  
   <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/icon.svg">
   <link rel="manifest" href="manifest.json">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* الأنماط الحالية تبقى كما هي */
+    :root {
+      /* --- Light Theme (Default) --- */
+      --bg-primary-gradient: linear-gradient(180deg, #f0f4f8, #d9e2ec);
+      /* ... باقي الأنماط تبقى كما هي */
+    }
+
+    /* إضافة رسالة عدم الاتصال */
+    .offline-indicator {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #ff7e5f, #feb47b);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      z-index: 10000;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    body.offline .offline-indicator {
+      display: block;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { opacity: 0.8; }
+    }
+  </style>
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "react/": "https://esm.sh/react@18.3.1/",
+    "react-dom/": "https://esm.sh/react-dom@18.3.1/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
+  <!-- رسالة عدم الاتصال -->
+  <div class="offline-indicator" id="offlineIndicator">
+    ⚡ التطبيق يعمل بدون اتصال بالإنترنت
+  </div>
+
+  <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+  <script type="module" src="index.tsx"></script>
+  
+  <script>
+    // إدارة حالة الاتصال
+    function updateOnlineStatus() {
+      if (!navigator.onLine) {
+        document.body.classList.add('offline');
+        console.log('⚡ التطبيق يعمل بدون اتصال');
+      } else {
+        document.body.classList.remove('offline');
+        console.log('✅ الاتصال متوفر');
+      }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('✅ Service Worker مسجل:', registration.scope);
+          })
+          .catch(error => {
+            console.log('❌ Service Worker فشل التسجيل:', error);
+          });
+      });
+    }
+
+    // اكتشاف تثبيت PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('📲 PWA قابل للتثبيت');
+    });
+  </script>
 </body>
 </html>
