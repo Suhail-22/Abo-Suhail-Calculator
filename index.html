@@ -1,120 +1,296 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Abo Suhail Calculator - يعمل بدون اتصال</title>
-  <meta name="theme-color" content="#050A14"/>
-  <meta name="description" content="Abo Suhail Calculator - Advanced PWA calculator with offline support.">
-  
-  <!-- PWA Meta Tags -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ASC Calculator">
-  <link rel="apple-touch-icon" href="/assets/icon.svg">
-  
-  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-  
-  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="manifest" href="manifest.json">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;700&family=Almarai:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة أبو سهيل - تعمل بدون نت</title>
+    <meta name="theme-color" content="#050A14"/>
+    
+    <!-- PWA إعدادات -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
 
-  <style>
-    /* الأنماط الحالية تبقى كما هي */
-    :root {
-      /* --- Light Theme (Default) --- */
-      --bg-primary-gradient: linear-gradient(180deg, #f0f4f8, #d9e2ec);
-      /* ... باقي الأنماط تبقى كما هي */
-    }
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
 
-    /* إضافة رسالة عدم الاتصال */
-    .offline-indicator {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(135deg, #ff7e5f, #feb47b);
-      color: white;
-      text-align: center;
-      padding: 10px;
-      z-index: 10000;
-      font-weight: bold;
-      animation: pulse 2s infinite;
-    }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
 
-    body.offline .offline-indicator {
-      display: block;
-    }
+        /* زر التثبيت */
+        .install-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
 
-    @keyframes pulse {
-      0% { opacity: 0.8; }
-      50% { opacity: 1; }
-      100% { opacity: 0.8; }
-    }
-  </style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
 
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "react/": "https://esm.sh/react@18.3.1/",
-    "react-dom/": "https://esm.sh/react-dom@18.3.1/"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+        /* رسالة عدم الاتصال */
+        .offline-message {
+            background: #ff9800;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .offline .offline-message {
+            display: block;
+        }
+
+        /* الحاسبة */
+        .calculator {
+            background: #2c3e50;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .display {
+            background: #1a252f;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: right;
+            font-size: 2em;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            overflow-x: auto;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            height: 60px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            background: #34495e;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background: #4a6572;
+        }
+
+        .equals {
+            background: #27ae60;
+            grid-row: span 2;
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        /* حالة التطبيق */
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <!-- رسالة عدم الاتصال -->
-  <div class="offline-indicator" id="offlineIndicator">
-    ⚡ التطبيق يعمل بدون اتصال بالإنترنت
-  </div>
+    <div class="container">
+        <!-- زر التثبيت -->
+        <div id="installBtn" class="install-btn">
+            📲 اضغط هنا لتثبيت التطبيق
+        </div>
 
-  <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root"></div>
-  <script type="module" src="index.tsx"></script>
-  
-  <script>
-    // إدارة حالة الاتصال
-    function updateOnlineStatus() {
-      if (!navigator.onLine) {
-        document.body.classList.add('offline');
-        console.log('⚡ التطبيق يعمل بدون اتصال');
-      } else {
-        document.body.classList.remove('offline');
-        console.log('✅ الاتصال متوفر');
-      }
-    }
+        <!-- رسالة عدم الاتصال -->
+        <div id="offlineMessage" class="offline-message">
+            ⚡ التطبيق يعمل بدون اتصال
+        </div>
 
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>🧮 حاسبة أبو سهيل</h1>
+            <p>تطبيق يعمل بدون اتصال بالإنترنت</p>
+        </header>
 
-    // تسجيل Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('✅ Service Worker مسجل:', registration.scope);
-          })
-          .catch(error => {
-            console.log('❌ Service Worker فشل التسجيل:', error);
-          });
-      });
-    }
+        <!-- الحاسبة -->
+        <div class="calculator">
+            <div class="display" id="display">0</div>
+            <div class="buttons">
+                <button onclick="clearDisplay()">C</button>
+                <button onclick="deleteLast()">⌫</button>
+                <button onclick="appendToDisplay('/')">/</button>
+                <button onclick="appendToDisplay('*')">×</button>
+                
+                <button onclick="appendToDisplay('7')">7</button>
+                <button onclick="appendToDisplay('8')">8</button>
+                <button onclick="appendToDisplay('9')">9</button>
+                <button onclick="appendToDisplay('-')">-</button>
+                
+                <button onclick="appendToDisplay('4')">4</button>
+                <button onclick="appendToDisplay('5')">5</button>
+                <button onclick="appendToDisplay('6')">6</button>
+                <button onclick="appendToDisplay('+')">+</button>
+                
+                <button onclick="appendToDisplay('1')">1</button>
+                <button onclick="appendToDisplay('2')">2</button>
+                <button onclick="appendToDisplay('3')">3</button>
+                <button onclick="calculate()" class="equals">=</button>
+                
+                <button onclick="appendToDisplay('0')" class="zero">0</button>
+                <button onclick="appendToDisplay('.')">.</button>
+            </div>
+        </div>
 
-    // اكتشاف تثبيت PWA
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      console.log('📲 PWA قابل للتثبيت');
-    });
-  </script>
+        <!-- حالة التطبيق -->
+        <div class="status">
+            <h3>🔧 حالة التطبيق</h3>
+            <div id="appStatus">جاري التحقق...</div>
+        </div>
+    </div>
+
+    <script>
+        // الحاسبة البسيطة
+        let currentInput = '0';
+        
+        function updateDisplay() {
+            document.getElementById('display').textContent = currentInput;
+        }
+        
+        function appendToDisplay(value) {
+            if (currentInput === '0') {
+                currentInput = value;
+            } else {
+                currentInput += value;
+            }
+            updateDisplay();
+        }
+        
+        function clearDisplay() {
+            currentInput = '0';
+            updateDisplay();
+        }
+        
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+        
+        function calculate() {
+            try {
+                currentInput = eval(currentInput.replace('×', '*')).toString();
+            } catch (error) {
+                currentInput = 'خطأ';
+            }
+            updateDisplay();
+        }
+
+        // إدارة التثبيت
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                installBtn.style.display = 'none';
+                deferredPrompt = null;
+                showNotification('✅ تم تثبيت التطبيق بنجاح!');
+            }
+        });
+
+        // إدارة حالة الاتصال
+        function updateOnlineStatus() {
+            const offlineMessage = document.getElementById('offlineMessage');
+            if (!navigator.onLine) {
+                document.body.classList.add('offline');
+                showNotification('⚡ أنت غير متصل - التطبيق يعمل محلياً');
+            } else {
+                document.body.classList.remove('offline');
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => {
+                    updateAppStatus('✅ Service Worker مسجل');
+                    console.log('✅ Service Worker يعمل');
+                })
+                .catch(error => {
+                    updateAppStatus('❌ Service Worker فشل');
+                    console.log('❌ Service Worker فشل:', error);
+                });
+        }
+
+        function updateAppStatus(message) {
+            document.getElementById('appStatus').innerHTML = message;
+        }
+
+        function showNotification(message) {
+            // يمكن إضافة تنبيه بسيط
+            console.log('📢:', message);
+        }
+
+        // تحديث الحالة أول مرة
+        updateAppStatus('🔍 جاري فحص الميزات...');
+        setTimeout(() => {
+            let status = '';
+            status += 'Service Worker: ' + ('serviceWorker' in navigator ? '✅' : '❌') + '<br>';
+            status += 'التخزين: ' + ('caches' in window ? '✅' : '❌') + '<br>';
+            status += 'الاتصال: ' + (navigator.onLine ? '✅' : '⚡');
+            updateAppStatus(status);
+        }, 1000);
+    </script>
 </body>
 </html>

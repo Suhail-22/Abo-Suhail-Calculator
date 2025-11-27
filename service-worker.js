@@ -1,33 +1,28 @@
-// service-worker.js محسن
-const CACHE_NAME = 'abo-suhail-calculator-v2';
+const CACHE_NAME = 'asc-simple-mobile-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/assets/icon.svg',
-  '/manifest.json',
-  // سيتم إضافة الملفات الديناميكية أثناء التشغيل
+  '/manifest.json'
 ];
 
-self.addEventListener('install', (event) => {
-  console.log('🔄 Service Worker: Installing...');
+// تثبيت Service Worker
+self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('✅ Service Worker: Caching core files');
+      .then(function(cache) {
         return cache.addAll(urlsToCache);
       })
       .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', (event) => {
-  console.log('🎯 Service Worker: Activated');
+// تفعيل Service Worker
+self.addEventListener('activate', function(event) {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(function(cacheNames) {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        cacheNames.map(function(cacheName) {
           if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Removing old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -36,43 +31,30 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  // استثناء طلبات التحليلات والخدمات الخارجية
-  if (event.request.url.includes('google-analytics') || 
-      event.request.url.includes('api.') ||
-      !event.request.url.startsWith('http')) {
-    return;
-  }
-
+// اعتراض الطلبات
+self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // إذا وجد في الكاش
+      .then(function(response) {
         if (response) {
           return response;
         }
-
-        // إذا لم يوجد، جلب من الشبكة
         return fetch(event.request)
-          .then((networkResponse) => {
-            // تخزين الردود الناجحة فقط
+          .then(function(networkResponse) {
             if (networkResponse && networkResponse.status === 200) {
               const responseToCache = networkResponse.clone();
               caches.open(CACHE_NAME)
-                .then((cache) => {
+                .then(function(cache) {
                   cache.put(event.request, responseToCache);
                 });
             }
             return networkResponse;
           })
-          .catch(() => {
-            // للطلبات الديناميكية، أرجع صفحة الأساس
+          .catch(function() {
             if (event.request.destination === 'document') {
               return caches.match('/index.html');
             }
-            return new Response('التطبيق يعمل بدون اتصال', {
-              headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-            });
+            return new Response('التطبيق يعمل بدون اتصال');
           });
       })
   );
