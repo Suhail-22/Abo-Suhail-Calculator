@@ -1,0 +1,26 @@
+{
+  "name": "Abo Suhail Calculator",
+  "short_name": "ASC Calculator",
+  "description": "حاسبة متقدمة تعمل بدون اتصال بالإنترنت",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050A14",
+  "theme_color": "#050A14",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "ar", 
+  "dir": "rtl",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
